@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 // ─── Servir frontend estático ─────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
 const sseClients = [];
@@ -88,7 +88,13 @@ udpServer.on("message", async (msg, rinfo) => {
   console.log(
     `[DB] Insertado: timestamp=${timestamp} lat=${latitude} lon=${longitude}`,
   );
-  emitir({ timestamp, latitude, longitude });
+
+  await pool.query(
+    "SELECT pg_notify('gps_update', $1)",
+    [JSON.stringify({ timestamp, latitude, longitude })]
+  );
+
+emitir({ timestamp, latitude, longitude });
 });
 
 udpServer.on("error", (err) => {

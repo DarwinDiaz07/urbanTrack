@@ -14,7 +14,7 @@ app.use((req, res, next) => {
 });
 
 // ─── Servir frontend estático ─────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
 const sseClients = [];
@@ -37,38 +37,25 @@ app.get("/api/stream", (req, res) => {
   });
 });
 
-// Polling a la DB cada 10s para detectar nuevos registros y notificar por SSE
-let ultimoId = 0;
-
-async function inicializarUltimoId() {
-  const result = await pool.query(
-    "SELECT id FROM gps_positions ORDER BY id DESC LIMIT 1",
-  );
-  if (result.rows.length > 0) {
-    ultimoId = result.rows[0].id;
-  }
+function emitir(data) {
+  const payload = `data: ${JSON.stringify(data)}\n\n`;
+  sseClients.forEach((client) => client.write(payload));
 }
 
-setInterval(async () => {
-  if (sseClients.length === 0) return;
-  try {
-    const result = await pool.query(
-      "SELECT id, timestamp, latitude, longitude FROM gps_positions WHERE id > $1 ORDER BY id ASC",
-      [ultimoId],
-    );
-    for (const row of result.rows) {
-      ultimoId = row.id;
-      const payload = `data: ${JSON.stringify({
-        timestamp: row.timestamp,
-        latitude: row.latitude,
-        longitude: row.longitude,
-      })}\n\n`;
-      sseClients.forEach((client) => client.write(payload));
-    }
-  } catch (err) {
-    console.error("[POLL] Error:", err.message);
-  }
-}, 10000);
+async function escucharDB() {
+  const client = await pool.connect();
+  await client.query("LISTEN gps_update");
+  console.log("[LISTEN] Escuchando notificaciones de PostgreSQL...");
+  client.on("notification", (msg) => {
+    const data = JSON.parse(msg.payload);
+    console.log(`[NOTIFY] Nuevo dato: ${msg.payload}`);
+    emitir(data);
+  });
+  client.on("error", (err) => {
+    console.error("[LISTEN] Error:", err.message);
+    setTimeout(escucharDB, 5000);
+  });
+}
 
 // ─── API REST ─────────────────────────────────────────────────────────────────
 app.get("/api/latest", async (req, res) => {
@@ -88,7 +75,7 @@ app.get("/api/history", async (req, res) => {
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 conectar()
   .then(async () => {
-    await inicializarUltimoId();
+    await escucharDB();
     app.listen(WEB_PORT, () => {
       console.log(`[WEB] Backend-reader corriendo en puerto ${WEB_PORT}`);
     });
