@@ -1,5 +1,7 @@
 require("dotenv").config();
 const express = require("express");
+const https = require("https");
+const fs = require("fs");
 const dgram = require("dgram");
 const path = require("path");
 const { pool, inicializar } = require("./db");
@@ -25,11 +27,9 @@ app.get("/api/stream", (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
-
   const heartbeat = setInterval(() => res.write(": heartbeat\n\n"), 20000);
   sseClients.push(res);
   console.log(`[SSE] Cliente conectado. Total: ${sseClients.length}`);
-
   req.on("close", () => {
     clearInterval(heartbeat);
     const idx = sseClients.indexOf(res);
@@ -94,7 +94,7 @@ udpServer.on("message", async (msg, rinfo) => {
     [JSON.stringify({ timestamp, latitude, longitude })]
   );
 
-emitir({ timestamp, latitude, longitude });
+  emitir({ timestamp, latitude, longitude });
 });
 
 udpServer.on("error", (err) => {
@@ -109,9 +109,19 @@ udpServer.bind(UDP_PORT, () => {
 // ─── Iniciar servidor web ─────────────────────────────────────────────────────
 inicializar()
   .then(() => {
-    app.listen(WEB_PORT, () => {
-      console.log(`[WEB] Backend-writer corriendo en puerto ${WEB_PORT}`);
-    });
+    if (process.env.CERT_PATH) {
+      const options = {
+        key: fs.readFileSync(`${process.env.CERT_PATH}/privkey.pem`),
+        cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`)
+      };
+      https.createServer(options, app).listen(443, () => {
+        console.log(`[WEB] Backend-writer corriendo en puerto 443 HTTPS`);
+      });
+    } else {
+      app.listen(WEB_PORT, () => {
+        console.log(`[WEB] Backend-writer corriendo en puerto ${WEB_PORT}`);
+      });
+    }
   })
   .catch((err) => {
     console.error("[DB] Error al conectar:", err.message);
