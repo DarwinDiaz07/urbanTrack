@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-writer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy Writer - Darwin (EC2-0)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 52.3.248.177
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY_DARWIN }}
+          script: |
+            cd ~/urbanTrack
+            git pull origin main
+            cd backend-writer
+            npm install --production
+            sudo pm2 restart backend-writer
+
+  deploy-readers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Reader - Jorge (EC2-3)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 52.2.204.177
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY_JORGE }}
+          script: |
+            cd ~/urbanTrack
+            git pull origin main
+            cd backend-reader
+            npm install --production
+            sudo pm2 restart backend-reader
+
+      - name: Deploy Reader - Kenneth (EC2-1)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 98.89.107.107
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY_KENNETH }}
+          script: |
+            cd ~/urbanTrack
+            git pull origin main
+            cd backend-reader
+            npm install --production
+            sudo pm2 restart backend-reader
+
+      - name: Deploy Reader - Juan (EC2-2)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 54.234.178.109
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY_JUAN }}
+          script: |
+            cd ~/urbanTrack
+            git pull origin main
+            cd backend-reader
+            npm install --production
+            sudo pm2 restart backend-reader

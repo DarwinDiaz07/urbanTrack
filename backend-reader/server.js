@@ -5,7 +5,7 @@ const path = require("path");
 const { pool, conectar } = require("./db");
 
 const app = express();
-const WEB_PORT = 80;
+const WEB_PORT = 3000;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
