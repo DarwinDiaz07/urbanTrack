@@ -6,7 +6,7 @@ const { pool, inicializar } = require("./db");
 
 const app = express();
 const UDP_PORT = 5000;
-const WEB_PORT = 80;
+const WEB_PORT = 3000;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
