@@ -303,6 +303,7 @@ html, body {
 }
 
 .history-table-wrap {
+  overflow-x: hidden;
   overflow-y: auto;
   flex: 1;
   padding: 0 6px 10px 16px;
@@ -310,6 +311,7 @@ html, body {
 
 .history-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.82rem;
@@ -326,10 +328,12 @@ html, body {
   color: var(--yellow-primary);
   font-weight: 600;
   text-align: left;
-  padding: 10px 12px;
-  font-size: 0.75rem;
+  padding: 10px 8px;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -342,11 +346,13 @@ html, body {
 }
 
 .history-table td {
-  padding: 9px 12px;
+  padding: 9px 8px;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-light);
   transition: background var(--transition);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
