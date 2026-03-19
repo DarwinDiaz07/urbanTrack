@@ -147,7 +147,7 @@ async function cargarHistorial() {
 
     // Dibujar la polilínea con todos los puntos históricos de una vez
     polilinea = L.polyline(coordenadas, {
-      color: "#FFD700",
+      color: "#000000",
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
