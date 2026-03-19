@@ -61,7 +61,7 @@ function moverMarcador(lat, lon) {
     polilinea.setLatLngs(coordenadas);
   } else {
     polilinea = L.polyline(coordenadas, {
-      color: "#1A1A1A",   // Was #FFD700
+      color: "#1A1A1A",   
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
