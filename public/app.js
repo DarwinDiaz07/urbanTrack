@@ -32,8 +32,9 @@ const coordenadas = [];
 
 // OpenStreetMap tiles
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  maxZoom: 19,
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 14,
 }).addTo(mapa);
 
 // Yellow circle marker icon
@@ -53,7 +54,7 @@ function moverMarcador(lat, lon) {
   } else {
     marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa);
   }
-  mapa.setView([lat, lon], 14);
+  mapa.setView([lat, lon]);
 
   coordenadas.push([lat, lon]);
 
@@ -61,7 +62,7 @@ function moverMarcador(lat, lon) {
     polilinea.setLatLngs(coordenadas);
   } else {
     polilinea = L.polyline(coordenadas, {
-      color: "#1A1A1A",   
+      color: "#1A1A1A",
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
