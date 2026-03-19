@@ -27,6 +27,8 @@ function tsAHora(ts) {
 // ─── Mapa Leaflet ─────────────────────────────────────────────────────────────
 const mapa = L.map("mapa").setView([4.5709, -74.2973], 6);
 let marcador = null;
+let polilinea = null;
+const coordenadas = [];
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "OpenStreetMap",
@@ -39,6 +41,18 @@ function moverMarcador(lat, lon) {
     marcador = L.marker([lat, lon]).addTo(mapa);
   }
   mapa.setView([lat, lon], 14);
+
+  coordenadas.push([lat, lon]);
+
+  if (polilinea) {
+    polilinea.setLatLngs(coordenadas);
+  } else {
+    polilinea = L.polyline(coordenadas, {
+      color: "#2563eb",
+      weight: 4,
+      opacity: 0.8,
+    }).addTo(mapa);
+  }
 }
 
 // ─── Referencias DOM ──────────────────────────────────────────────────────────
@@ -89,8 +103,28 @@ async function cargarHistorial() {
     const res = await fetch("/api/history");
     const datos = await res.json();
     if (datos.length === 0) return;
-    actualizarActual(datos[0]);
-    datos.forEach((d) => agregarFila(d, false));
+
+    // Invertir: la API devuelve DESC, necesitamos de más antiguo a más reciente
+    datos.reverse().forEach((d) => {
+      coordenadas.push([Number(d.latitude), Number(d.longitude)]);
+      agregarFila(d, false);
+    });
+
+    // Dibujar la polilínea con todos los puntos históricos de una vez
+    polilinea = L.polyline(coordenadas, {
+      color: "#2563eb",
+      weight: 4,
+      opacity: 0.8,
+    }).addTo(mapa);
+
+    // Mostrar el punto más reciente como posición actual y poner el marcador
+    const ultimo = datos[datos.length - 1];
+    actualizarActual(ultimo);
+
+    // Ajustar el mapa para ver todo el recorrido
+    if (coordenadas.length > 1) {
+      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
+    }
   } catch (err) {
     console.error("[HISTORIAL] Error:", err);
   }
@@ -114,8 +148,6 @@ function conectarSSE() {
   source.onerror = () => {
     elEstado.textContent = "Desconectado (reintentando...)";
     console.warn("[SSE] Conexion perdida, reintentando...");
-    source.close();
-    setTimeout(conectarSSE, 3000);
   };
 }
 
