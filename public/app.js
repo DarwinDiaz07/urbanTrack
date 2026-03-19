@@ -40,8 +40,8 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 const taxiIcon = L.divIcon({
   className: "",
   html: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="14" cy="14" r="12" fill="#FFD700" stroke="#1A1A1A" stroke-width="3"/>
-    <circle cx="14" cy="14" r="5" fill="#1A1A1A"/>
+    <circle cx="14" cy="14" r="12" fill="#1A1A1A" stroke="#FFD700" stroke-width="3"/>
+    <circle cx="14" cy="14" r="5" fill="#FFD700"/>
   </svg>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14],
@@ -61,7 +61,7 @@ function moverMarcador(lat, lon) {
     polilinea.setLatLngs(coordenadas);
   } else {
     polilinea = L.polyline(coordenadas, {
-      color: "#FFD700",
+      color: "#1A1A1A",   // Was #FFD700
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
