@@ -2,64 +2,109 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GPS Tracker</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
-    <style>
-      .main-grid {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        gap: 16px;
-      }
-
-      #mapa {
-        height: 400px;
-        width: 100%;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>GPS Tracker TEST</h1>
-    <p>Estado: <span id="estado">Desconectado</span></p>
+    <div class="app">
+      <!-- ── Header ────────────────────────────────────────── -->
+      <header class="header">
+        <div class="header__brand">
+          <span class="header__icon">🚕</span>
+          <span class="header__title">GPS Tracker</span>
+        </div>
+        <div class="header__status">
+          <span class="status-dot" id="status-dot"></span>
+          <span class="status-text" id="estado">Desconectado</span>
+        </div>
+      </header>
+      <div class="taxi-stripe"></div>
 
-    <hr />
+      <!-- ── Dashboard ─────────────────────────────────────── -->
+      <main class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <!-- Current Position Card -->
+          <section class="card">
+            <div class="card__header">
+              <h2 class="card__title">📍 Posición Actual</h2>
+              <span class="badge-live">
+                <span class="badge-live__dot"></span>
+                LIVE
+              </span>
+            </div>
+            <div class="data-grid">
+              <div class="data-item">
+                <span class="data-item__label">Latitud</span>
+                <span class="data-item__value data-item__value--coord" id="latitud">—</span>
+              </div>
+              <div class="data-item">
+                <span class="data-item__label">Longitud</span>
+                <span class="data-item__value data-item__value--coord" id="longitud">—</span>
+              </div>
+              <div class="data-item">
+                <span class="data-item__label">Fecha</span>
+                <span class="data-item__value" id="fecha">—</span>
+              </div>
+              <div class="data-item">
+                <span class="data-item__label">Hora</span>
+                <span class="data-item__value" id="hora">—</span>
+              </div>
+            </div>
+          </section>
 
-    <div class="main-grid">
+          <!-- History Table -->
+          <section class="history-section">
+            <div class="card__header">
+              <h2 class="card__title">📋 Historial de Viaje</h2>
+            </div>
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Latitud</th>
+                    <th>Longitud</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-body">
+                  <tr class="empty-row">
+                    <td colspan="4">Sin datos</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </aside>
 
-      <div class="left-panel">
-        <h2>Posicion Actual</h2>
-        <p>Latitud: <span id="latitud">-</span></p>
-        <p>Longitud: <span id="longitud">-</span></p>
-        <p>Fecha: <span id="fecha">-</span></p>
-        <p>Hora: <span id="hora">-</span></p>
+        <!-- Map -->
+        <div class="map-area">
+          <div class="map-container">
+            <div id="mapa"></div>
+            <div class="map-info">
+              <div class="map-info__row">
+                <span class="map-info__label">Última actualización</span>
+                <span class="map-info__value" id="map-time">--:--:--</span>
+              </div>
+              <div class="map-info__row">
+                <span class="map-info__label">Coordenadas</span>
+                <span class="map-info__value" id="map-coords">—, —</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
 
-        <hr />
-
-        <h2>Historial</h2>
-        <table border="1" cellpadding="5">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Latitud</th>
-              <th>Longitud</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-body">
-            <tr>
-              <td colspan="4">Sin datos</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="map-panel">
-        <h2>Mapa</h2>
-        <div id="mapa"></div>
-      </div>
-
+      <!-- ── Footer ────────────────────────────────────────── -->
+      <footer class="footer">
+        © 2026 <span>TaxiTracker GPS</span> — Real-Time Fleet Management
+      </footer>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
