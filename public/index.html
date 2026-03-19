@@ -8,6 +8,12 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
     <style>
+      .main-grid {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 16px;
+      }
+
       #mapa {
         height: 400px;
         width: 100%;
@@ -15,40 +21,46 @@
     </style>
   </head>
   <body>
-    <h1>GPS Tracker</h1>
+    <h1>GPS Tracker TEST</h1>
     <p>Estado: <span id="estado">Desconectado</span></p>
 
     <hr />
 
-    <h2>Posicion Actual</h2>
-    <p>Latitud: <span id="latitud">-</span></p>
-    <p>Longitud: <span id="longitud">-</span></p>
-    <p>Fecha: <span id="fecha">-</span></p>
-    <p>Hora: <span id="hora">-</span></p>
+    <div class="main-grid">
 
-    <hr />
+      <div class="left-panel">
+        <h2>Posicion Actual</h2>
+        <p>Latitud: <span id="latitud">-</span></p>
+        <p>Longitud: <span id="longitud">-</span></p>
+        <p>Fecha: <span id="fecha">-</span></p>
+        <p>Hora: <span id="hora">-</span></p>
 
-    <h2>Mapa</h2>
-    <div id="mapa"></div>
+        <hr />
 
-    <hr />
+        <h2>Historial</h2>
+        <table border="1" cellpadding="5">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Latitud</th>
+              <th>Longitud</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body">
+            <tr>
+              <td colspan="4">Sin datos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <h2>Historial</h2>
-    <table border="1" cellpadding="5">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Latitud</th>
-          <th>Longitud</th>
-        </tr>
-      </thead>
-      <tbody id="tabla-body">
-        <tr>
-          <td colspan="4">Sin datos</td>
-        </tr>
-      </tbody>
-    </table>
+      <div class="map-panel">
+        <h2>Mapa</h2>
+        <div id="mapa"></div>
+      </div>
+
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

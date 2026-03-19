@@ -114,6 +114,8 @@ function conectarSSE() {
   source.onerror = () => {
     elEstado.textContent = "Desconectado (reintentando...)";
     console.warn("[SSE] Conexion perdida, reintentando...");
+    source.close();
+    setTimeout(conectarSSE, 3000);
   };
 }
 
