@@ -88,7 +88,7 @@ conectar()
         key: fs.readFileSync(`${process.env.CERT_PATH}/privkey.pem`),
         cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`)
       };
-      https.createServer(options, app).listen(443, () => {
+      https.createServer(options, app).listen(WEB_PORT, () => {
         console.log(`[WEB] Backend-reader corriendo en puerto 443 HTTPS`);
       });
     } else {
