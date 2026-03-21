@@ -6,7 +6,7 @@ const path = require("path");
 const { pool, conectar } = require("./db");
 
 const app = express();
-const WEB_PORT = 3000;
+const WEB_PORT = process.env.WEB_PORT;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -16,6 +16,14 @@ app.use((req, res, next) => {
 
 // ─── Servir frontend estático ─────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../public")));
+
+
+// ─── API Config ───────────────────────────────────────────────────────────────
+app.get("/api/config", (req, res) => {
+  res.json({
+    title: process.env.TITLE_NAME || "GPS Tracker"
+  });
+});
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
 const sseClients = [];

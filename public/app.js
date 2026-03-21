@@ -166,6 +166,17 @@ async function cargarHistorial() {
   }
 }
 
+async function cargarConfig() {
+  try {
+    const res = await fetch("/api/config");
+    const config = await res.json();
+    document.title = config.title;
+    document.querySelector("h1").textContent = config.title;
+  } catch (err) {
+    console.error("[CONFIG] Error:", err);
+  }
+}
+
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function conectarSSE() {
   const source = new EventSource("/api/stream");
@@ -186,9 +197,13 @@ function conectarSSE() {
     elEstado.textContent = "Desconectado";
     elStatusDot.classList.remove("status-dot--connected");
     console.warn("[SSE] Conexion perdida, reintentando...");
+    source.close();
+    setTimeout(conectarSSE, 3000);
   };
+
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+cargarConfig();
 cargarHistorial();
 conectarSSE();
