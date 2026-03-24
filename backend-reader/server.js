@@ -6,7 +6,7 @@ const path = require("path");
 const { pool, conectar } = require("./db");
 
 const app = express();
-const WEB_PORT = 3000;
+const WEB_PORT = process.env.WEB_PORT;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -16,6 +16,14 @@ app.use((req, res, next) => {
 
 // ─── Servir frontend estático ─────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../public")));
+
+
+// ─── API Config ───────────────────────────────────────────────────────────────
+app.get("/api/config", (req, res) => {
+  res.json({
+    title: process.env.TITLE_NAME || "GPS Tracker"
+  });
+});
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
 const sseClients = [];
@@ -80,8 +88,8 @@ conectar()
         key: fs.readFileSync(`${process.env.CERT_PATH}/privkey.pem`),
         cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`)
       };
-      https.createServer(options, app).listen(443, () => {
-        console.log(`[WEB] Backend-reader corriendo en puerto 443 HTTPS`);
+      https.createServer(options, app).listen(WEB_PORT, () => {
+        console.log(`[WEB] Backend-reader corriendo en puerto ${WEB_PORT} HTTPS`);
       });
     } else {
       app.listen(WEB_PORT, () => {
