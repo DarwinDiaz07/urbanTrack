@@ -16,7 +16,7 @@
       <header class="header">
         <div class="header__brand">
           <span class="header__icon">🚕</span>
-          <span class="header__title">GPS Tracker</span>
+          <span class="header__title">Prueba gps</span>
         </div>
         <div class="header__status">
           <span class="status-dot" id="status-dot"></span>
@@ -58,30 +58,26 @@
             </div>
           </section>
 
-          <!-- History Table -->
-          <section class="history-section">
+          <!-- History Range -->
+          <section class="card">
             <div class="card__header">
-              <h2 class="card__title">📋 Historial de Viaje</h2>
+              <h2 class="card__title">🕐 Consultar Recorrido</h2>
             </div>
-            <div class="history-table-wrap">
-              <table class="history-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Latitud</th>
-                    <th>Longitud</th>
-                  </tr>
-                </thead>
-                <tbody id="tabla-body">
-                  <tr class="empty-row">
-                    <td colspan="4">Sin datos</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="data-grid">
+              <div class="data-item">
+                <span class="data-item__label">Inicio</span>
+                <input type="datetime-local" id="fecha-inicio" class="input-datetime" />
+              </div>
+              <div class="data-item">
+                <span class="data-item__label">Fin</span>
+                <input type="datetime-local" id="fecha-fin" class="input-datetime" />
+              </div>
+            </div>
+            <div class="btn-group">
+              <button id="btn-historial" class="btn btn--primary">Ver historial</button>
+              <button id="btn-vivo" class="btn btn--secondary">Ver en vivo</button>
             </div>
           </section>
-        </aside>
 
         <!-- Map -->
         <div class="map-area">

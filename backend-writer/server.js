@@ -7,8 +7,8 @@ const path = require("path");
 const { pool, inicializar } = require("./db");
 
 const app = express();
-const UDP_PORT = 5000;
-const WEB_PORT = 3000;
+const UDP_PORT = process.env.UDP_PORT;
+const WEB_PORT = process.env.WEB_PORT;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -18,6 +18,11 @@ app.use((req, res, next) => {
 
 // ─── Servir frontend estático ─────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../public")));
+
+// ─── API Config ───────────────────────────────────────────────────────────────
+app.get("/api/config", (req, res) => {
+  res.json({ title: process.env.TITLE_NAME });
+});
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
 const sseClients = [];
@@ -53,7 +58,19 @@ app.get("/api/latest", async (req, res) => {
 
 app.get("/api/history", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 50",
+    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1",
+  );
+  res.json(result.rows);
+});
+
+app.get("/api/history/range", async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: "start y end son requeridos" });
+  }
+  const result = await pool.query(
+    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
+    [start, end]
   );
   res.json(result.rows);
 });
@@ -112,10 +129,10 @@ inicializar()
     if (process.env.CERT_PATH) {
       const options = {
         key: fs.readFileSync(`${process.env.CERT_PATH}/privkey.pem`),
-        cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`)
+        cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`),
       };
-      https.createServer(options, app).listen(443, () => {
-        console.log(`[WEB] Backend-writer corriendo en puerto 443 HTTPS`);
+      https.createServer(options, app).listen(WEB_PORT, () => {
+        console.log(`[WEB] Backend-writer corriendo en puerto ${WEB_PORT} HTTPS`);
       });
     } else {
       app.listen(WEB_PORT, () => {

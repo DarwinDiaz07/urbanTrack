@@ -524,3 +524,68 @@ html, body {
     font-size: 1.1rem;
   }
 }
+/* ── Time Range Controls ───────────────────────────────────────────────── */
+.input-datetime {
+  width: 100%;
+  background: var(--black-primary);
+  border: 1px solid var(--gray-dark);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  transition: border-color var(--transition);
+  outline: none;
+}
+
+.input-datetime:focus {
+  border-color: var(--yellow-primary);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.15);
+}
+
+.input-datetime::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  letter-spacing: 0.3px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+}
+
+.btn--primary:hover {
+  background: var(--yellow-highlight);
+}
+
+.btn--secondary {
+  background: var(--gray-dark);
+  color: var(--text-light);
+  border: 1px solid var(--gray-medium);
+}
+
+.btn--secondary:hover {
+  background: var(--gray-medium);
+}
