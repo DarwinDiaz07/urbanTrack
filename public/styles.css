@@ -501,19 +501,18 @@ html, body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
     height: auto;
-    min-height: calc(100vh - 76px);
   }
 
   .sidebar {
     overflow-y: visible;
   }
 
-  .map-container {
-    min-height: 350px;
+  .map-area {
+    min-height: 400px;
   }
 
-  .history-table-wrap {
-    max-height: 220px;
+  .map-container {
+    min-height: 400px;
   }
 
   .header {
@@ -550,13 +549,14 @@ html, body {
 
 .btn-group {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 14px;
 }
 
 .btn {
-  flex: 1;
-  padding: 9px 12px;
+  width: 100%;
+  padding: 10px 12px;
   border: none;
   border-radius: 8px;
   font-family: var(--font-main);
