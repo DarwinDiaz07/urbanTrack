@@ -21,9 +21,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // ─── API Config ───────────────────────────────────────────────────────────────
 app.get("/api/config", (req, res) => {
-  res.json({
-    title: process.env.TITLE_NAME || "GPS Tracker",
-  });
+  res.json({ title: process.env.TITLE_NAME });
 });
 
 // ─── SSE: lista de clientes conectados ───────────────────────────────────────
@@ -60,7 +58,19 @@ app.get("/api/latest", async (req, res) => {
 
 app.get("/api/history", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 50",
+    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1",
+  );
+  res.json(result.rows);
+});
+
+app.get("/api/history/range", async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: "start y end son requeridos" });
+  }
+  const result = await pool.query(
+    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
+    [start, end]
   );
   res.json(result.rows);
 });
@@ -135,9 +145,7 @@ inicializar()
         cert: fs.readFileSync(`${process.env.CERT_PATH}/fullchain.pem`),
       };
       https.createServer(options, app).listen(WEB_PORT, () => {
-        console.log(
-          `[WEB] Backend-writer corriendo en puerto ${WEB_PORT} HTTPS`,
-        );
+        console.log(`[WEB] Backend-writer corriendo en puerto ${WEB_PORT} HTTPS`);
       });
     } else {
       app.listen(WEB_PORT, () => {

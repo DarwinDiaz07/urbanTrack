@@ -55,7 +55,6 @@ html, body {
   background: var(--gray-medium);
 }
 
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--gray-dark) var(--black-primary);
@@ -236,150 +235,91 @@ html, body {
   font-weight: 700;
 }
 
-/* Vehicle info list */
-.vehicle-info {
+/* ── Time Range Controls — columna única ───────────────────────────────── */
+.range-fields {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.vehicle-row {
+.range-field {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--gray-dark);
+  flex-direction: column;
+  gap: 4px;
 }
 
-.vehicle-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.vehicle-row__label {
-  font-size: 0.8rem;
+.range-field__label {
+  font-size: 0.75rem;
   color: var(--gray-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-weight: 500;
 }
 
-.vehicle-row__value {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-light);
-  font-family: var(--font-mono);
-}
-
-/* Status badge */
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.badge--yellow {
-  background: rgba(255, 215, 0, 0.15);
-  color: var(--yellow-primary);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-}
-
-/* ── History Table ─────────────────────────────────────────────────────── */
-.history-section {
-  background: var(--black-secondary);
-  border-radius: var(--radius);
-  border-left: 4px solid var(--yellow-primary);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1;
-}
-
-.history-section .card__header {
-  padding: 14px 20px 0;
-  margin-bottom: 10px;
-}
-
-.history-table-wrap {
-  overflow-x: hidden;
-  overflow-y: auto;
-  flex: 1;
-  padding: 0 6px 10px 16px;
-}
-
-.history-table {
+.input-datetime {
   width: 100%;
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 0.82rem;
-}
-
-.history-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.history-table th {
   background: var(--black-primary);
-  color: var(--yellow-primary);
-  font-weight: 600;
-  text-align: left;
-  padding: 10px 8px;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.history-table th:first-child {
-  border-radius: 8px 0 0 8px;
-}
-
-.history-table th:last-child {
-  border-radius: 0 8px 8px 0;
-}
-
-.history-table td {
-  padding: 9px 8px;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+  border: 1px solid var(--gray-dark);
+  border-radius: 8px;
   color: var(--text-light);
-  transition: background var(--transition);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  transition: border-color var(--transition);
+  outline: none;
 }
 
-.history-table tbody tr:nth-child(odd) {
-  background: var(--black-secondary);
+.input-datetime:focus {
+  border-color: var(--yellow-primary);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.15);
 }
 
-.history-table tbody tr:nth-child(even) {
-  background: #353535;
-}
-
-.history-table tbody tr:hover {
-  background: rgba(255, 215, 0, 0.08);
+.input-datetime::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
   cursor: pointer;
 }
 
-.history-table tbody tr.selected {
-  outline: 1px solid var(--yellow-primary);
-  outline-offset: -1px;
-  background: rgba(255, 215, 0, 0.1);
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
 }
 
-.history-table .empty-row td {
-  text-align: center;
-  color: var(--gray-medium);
+.btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
   font-family: var(--font-main);
-  padding: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  letter-spacing: 0.3px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+}
+
+.btn--primary:hover {
+  background: var(--yellow-highlight);
+}
+
+.btn--secondary {
+  background: var(--gray-dark);
+  color: var(--text-light);
+  border: 1px solid var(--gray-medium);
+}
+
+.btn--secondary:hover {
+  background: var(--gray-medium);
 }
 
 /* ── Map Area ──────────────────────────────────────────────────────────── */
@@ -397,6 +337,7 @@ html, body {
   overflow: hidden;
   position: relative;
   box-shadow: var(--shadow-card);
+  min-height: 0;
 }
 
 #mapa {
@@ -443,7 +384,7 @@ html, body {
   font-size: 0.75rem;
 }
 
-/* Dark theme overrides for Leaflet controls */
+/* Leaflet dark overrides */
 .leaflet-control-zoom a {
   background: var(--black-secondary) !important;
   color: var(--text-light) !important;
@@ -486,7 +427,6 @@ html, body {
   50% { opacity: 0.4; }
 }
 
-/* ── Focus / Active glow ───────────────────────────────────────────────── */
 .card:focus-within {
   box-shadow: var(--shadow-card), 0 0 10px rgba(255, 215, 0, 0.3);
 }
@@ -571,19 +511,18 @@ html, body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
     height: auto;
-    min-height: calc(100vh - 76px);
   }
 
   .sidebar {
     overflow-y: visible;
   }
 
-  .map-container {
-    min-height: 350px;
+  .map-area {
+    min-height: 400px;
   }
 
-  .history-table-wrap {
-    max-height: 220px;
+  .map-container {
+    min-height: 400px;
   }
 
   .header {
