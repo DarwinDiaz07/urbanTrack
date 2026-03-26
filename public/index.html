@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GPS Tracker</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -16,7 +13,7 @@
       <header class="header">
         <div class="header__brand">
           <span class="header__icon">🚕</span>
-          <span class="header__title">Prueba gps</span>
+          <span class="header__title">GPS Tracker</span>
         </div>
         <div class="header__status">
           <span class="status-dot" id="status-dot"></span>
@@ -29,6 +26,7 @@
       <main class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
+
           <!-- Current Position Card -->
           <section class="card">
             <div class="card__header">
@@ -58,18 +56,18 @@
             </div>
           </section>
 
-          <!-- History Range -->
+          <!-- History Range Card -->
           <section class="card">
             <div class="card__header">
               <h2 class="card__title">🕐 Consultar Recorrido</h2>
             </div>
-            <div class="data-grid">
-              <div class="data-item">
-                <span class="data-item__label">Inicio</span>
+            <div class="range-fields">
+              <div class="range-field">
+                <span class="range-field__label">Inicio</span>
                 <input type="datetime-local" id="fecha-inicio" class="input-datetime" />
               </div>
-              <div class="data-item">
-                <span class="data-item__label">Fin</span>
+              <div class="range-field">
+                <span class="range-field__label">Fin</span>
                 <input type="datetime-local" id="fecha-fin" class="input-datetime" />
               </div>
             </div>
@@ -78,7 +76,9 @@
               <button id="btn-vivo" class="btn btn--secondary">Ver en vivo</button>
             </div>
           </section>
-          </aside>
+
+        </aside>
+
         <!-- Map -->
         <div class="map-area">
           <div class="map-container">
@@ -99,7 +99,7 @@
 
       <!-- ── Footer ────────────────────────────────────────── -->
       <footer class="footer">
-        © 2026 <span>TaxiTracker GPS</span> — Real-Time Fleet Management
+        © 2026 <span>urbanTrack GPS</span> — Real-Time Fleet Management
       </footer>
     </div>
 

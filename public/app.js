@@ -26,14 +26,15 @@ function tsAHora(ts) {
 
 // ─── Mapa Leaflet ─────────────────────────────────────────────────────────────
 const mapa = L.map("mapa").setView([4.5709, -74.2973], 6);
-let marcador = null;
-let polilinea = null;
+let marcador   = null;
+let polilinea  = null;
 let coordenadas = [];
 let modoHistorial = false;
+let mapaInicializado = false; // controla el primer setView
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  maxZoom: 14,
+  maxZoom: 19,
 }).addTo(mapa);
 
 const taxiIcon = L.divIcon({
@@ -47,18 +48,29 @@ const taxiIcon = L.divIcon({
 });
 
 function moverMarcador(lat, lon) {
-  if (marcador) {
-    marcador.setLatLng([lat, lon]);
-  } else {
-    marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa);
-  }
-  mapa.setView([lat, lon]);
+  const latlng = [lat, lon];
 
+  // Marcador
+  if (marcador) {
+    marcador.setLatLng(latlng);
+  } else {
+    marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa);
+  }
+
+  // Centro del mapa: primer punto con setView, después panTo suave
+  if (!mapaInicializado) {
+    mapa.setView(latlng, 15);
+    mapaInicializado = true;
+  } else if (!modoHistorial) {
+    mapa.panTo(latlng);
+  }
+
+  // Polilínea en vivo (solo fuera de modo historial)
   if (!modoHistorial) {
-    coordenadas.push([lat, lon]);
+    coordenadas.push(latlng);
     if (polilinea) {
       polilinea.setLatLngs(coordenadas);
-    } else {
+    } else if (coordenadas.length >= 2) {
       polilinea = L.polyline(coordenadas, {
         color: "#000000",
         weight: 4,
@@ -69,37 +81,37 @@ function moverMarcador(lat, lon) {
 }
 
 // ─── Referencias DOM ──────────────────────────────────────────────────────────
-const elLatitud    = document.getElementById("latitud");
-const elLongitud   = document.getElementById("longitud");
-const elFecha      = document.getElementById("fecha");
-const elHora       = document.getElementById("hora");
-const elEstado     = document.getElementById("estado");
-const elStatusDot  = document.getElementById("status-dot");
-const elMapTime    = document.getElementById("map-time");
-const elMapCoords  = document.getElementById("map-coords");
+const elLatitud     = document.getElementById("latitud");
+const elLongitud    = document.getElementById("longitud");
+const elFecha       = document.getElementById("fecha");
+const elHora        = document.getElementById("hora");
+const elEstado      = document.getElementById("estado");
+const elStatusDot   = document.getElementById("status-dot");
+const elMapTime     = document.getElementById("map-time");
+const elMapCoords   = document.getElementById("map-coords");
 const elFechaInicio = document.getElementById("fecha-inicio");
-const elFechaFin   = document.getElementById("fecha-fin");
-const btnHistorial = document.getElementById("btn-historial");
-const btnVivo      = document.getElementById("btn-vivo");
+const elFechaFin    = document.getElementById("fecha-fin");
+const btnHistorial  = document.getElementById("btn-historial");
+const btnVivo       = document.getElementById("btn-vivo");
 
-// ─── Actualizar posicion actual ───────────────────────────────────────────────
+// ─── Actualizar UI + mapa ─────────────────────────────────────────────────────
 function actualizarActual(data) {
   const ts  = Number(data.timestamp);
   const lat = Number(data.latitude).toFixed(6);
   const lon = Number(data.longitude).toFixed(6);
   const hora = tsAHora(ts);
 
-  elLatitud.textContent  = lat;
-  elLongitud.textContent = lon;
-  elFecha.textContent    = tsAFecha(ts);
-  elHora.textContent     = hora;
-  elMapTime.textContent  = hora;
+  elLatitud.textContent   = lat;
+  elLongitud.textContent  = lon;
+  elFecha.textContent     = tsAFecha(ts);
+  elHora.textContent      = hora;
+  elMapTime.textContent   = hora;
   elMapCoords.textContent = `${lat}, ${lon}`;
 
   moverMarcador(Number(data.latitude), Number(data.longitude));
 }
 
-// ─── Cargar historial inicial (solo último punto) ─────────────────────────────
+// ─── Cargar último punto desde DB ─────────────────────────────────────────────
 async function cargarHistorial() {
   try {
     const res   = await fetch("/api/history");
@@ -173,14 +185,26 @@ function verEnVivo() {
     polilinea = null;
   }
 
-  coordenadas = [];
+  // Reconstruir polilínea en vivo desde las coordenadas acumuladas
+  if (coordenadas.length >= 2) {
+    polilinea = L.polyline(coordenadas, {
+      color: "#000000",
+      weight: 4,
+      opacity: 0.9,
+    }).addTo(mapa);
+  }
+
   elFechaInicio.value = "";
   elFechaFin.value    = "";
 
-  cargarHistorial();
+  // Volver a centrar en último punto conocido
+  if (coordenadas.length > 0) {
+    const ultimo = coordenadas[coordenadas.length - 1];
+    mapa.setView(ultimo, 15);
+  }
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// ─── Config dinámica ──────────────────────────────────────────────────────────
 async function cargarConfig() {
   try {
     const res    = await fetch("/api/config");
@@ -203,15 +227,19 @@ function conectarSSE() {
   };
 
   source.onmessage = (event) => {
-    if (modoHistorial) return;
-    const data = JSON.parse(event.data);
-    actualizarActual(data);
+    try {
+      const data = JSON.parse(event.data);
+      // Actualizar siempre el marcador y UI; la polilínea solo si no estamos en historial
+      actualizarActual(data);
+    } catch (e) {
+      console.error("[SSE] Error parseando evento:", e);
+    }
   };
 
   source.onerror = () => {
     elEstado.textContent = "Desconectado";
     elStatusDot.classList.remove("status-dot--connected");
-    console.warn("[SSE] Conexion perdida, reintentando...");
+    console.warn("[SSE] Conexion perdida, reintentando en 3s...");
     source.close();
     setTimeout(conectarSSE, 3000);
   };
