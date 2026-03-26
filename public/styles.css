@@ -590,30 +590,26 @@ html, body {
   background: var(--gray-medium);
 }
 
-/* ── Fix map height ────────────────────────────────────────────────────── */
-/* ── Fix map height ────────────────────────────────────────────────────── */
-.app {
-  height: 100vh;
-  overflow: hidden;
-}
 
+/* ── Fix map height ────────────────────────────────────────────────────── */
 .dashboard {
   flex: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  padding: 16px;
   min-height: 0;
-  height: 0;
 }
 
 .map-area {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
 }
 
 .map-container {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
 }
 
 #mapa {
