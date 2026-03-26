@@ -216,6 +216,17 @@ async function cargarConfig() {
   }
 }
 
+async function cargarConfig() {
+  try {
+    const res = await fetch("/api/config");
+    const config = await res.json();
+    document.title = config.title;
+    document.querySelector("h1") && (document.querySelector("h1").textContent = config.title);
+  } catch (err) {
+    console.error("[CONFIG] Error:", err);
+  }
+}
+
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function conectarSSE() {
   const source = new EventSource("/api/stream");

@@ -134,7 +134,7 @@ html, body {
 .dashboard {
   flex: 1;
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: 420px 1fr;
   gap: 16px;
   padding: 16px;
   min-height: 0;
@@ -429,6 +429,76 @@ html, body {
 
 .card:focus-within {
   box-shadow: var(--shadow-card), 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* ── Range Form ────────────────────────────────────────────────────────── */
+.range-form {
+  padding: 14px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.range-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.range-label {
+  font-size: 0.75rem;
+  color: var(--gray-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.range-input {
+  background: var(--black-primary);
+  border: 1px solid var(--gray-dark);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  width: 100%;
+  transition: border-color var(--transition);
+}
+
+.range-input:focus {
+  outline: none;
+  border-color: var(--yellow-primary);
+}
+
+.range-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+.btn--primary {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+}
+
+.btn--secondary {
+  background: var(--gray-dark);
+  color: var(--text-light);
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
