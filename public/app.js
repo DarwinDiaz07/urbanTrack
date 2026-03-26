@@ -133,29 +133,6 @@ function actualizarActual(data) {
   moverMarcador(Number(data.latitude), Number(data.longitude));
 }
 
-// ─── Agregar fila al historial ────────────────────────────────────────────────
-function agregarFila(data, inicio = true) {
-  const vacio = elTabla.querySelector(".empty-row");
-  if (vacio) vacio.remove();
-
-  const ts = Number(data.timestamp);
-  const fila = document.createElement("tr");
-  fila.innerHTML = `
-    <td>${tsAFecha(ts)}</td>
-    <td>${tsAHora(ts)}</td>
-    <td>${Number(data.latitude).toFixed(6)}</td>
-    <td>${Number(data.longitude).toFixed(6)}</td>
-  `;
-
-  if (inicio) {
-    elTabla.insertBefore(fila, elTabla.firstChild);
-  } else {
-    elTabla.appendChild(fila);
-  }
-
-  const filas = elTabla.querySelectorAll("tr");
-  if (filas.length > 5) filas[filas.length - 1].remove();
-}
 
 // ─── Cargar historial inicial ─────────────────────────────────────────────────
 async function cargarHistorial() {
