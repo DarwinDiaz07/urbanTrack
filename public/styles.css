@@ -589,3 +589,20 @@ html, body {
 .btn--secondary:hover {
   background: var(--gray-medium);
 }
+
+/* ── Fix map height ────────────────────────────────────────────────────── */
+.dashboard {
+  height: calc(100vh - 76px);
+}
+
+.map-area {
+  height: 100%;
+}
+
+.map-container {
+  height: 100%;
+}
+
+#mapa {
+  height: 100%;
+}
