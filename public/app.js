@@ -227,14 +227,14 @@ function conectarSSE() {
   };
 
   source.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      // Actualizar siempre el marcador y UI; la polilínea solo si no estamos en historial
-      actualizarActual(data);
-    } catch (e) {
-      console.error("[SSE] Error parseando evento:", e);
-    }
-  };
+      try {
+        if (modoHistorial) return;
+        const data = JSON.parse(event.data);
+        actualizarActual(data);
+      } catch (e) {
+        console.error("[SSE] Error parseando evento:", e);
+      }
+    };
 
   source.onerror = () => {
     elEstado.textContent = "Desconectado";
