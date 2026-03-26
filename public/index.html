@@ -58,30 +58,26 @@
             </div>
           </section>
 
-          <!-- History Table -->
-          <section class="history-section">
-            <div class="card__header">
-              <h2 class="card__title">📋 Historial de Viaje</h2>
-            </div>
-            <div class="history-table-wrap">
-              <table class="history-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Latitud</th>
-                    <th>Longitud</th>
-                  </tr>
-                </thead>
-                <tbody id="tabla-body">
-                  <tr class="empty-row">
-                    <td colspan="4">Sin datos</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </aside>
+	<!-- History Range -->
+	<section class="history-section">
+	  <div class="card__header">
+	    <h2 class="card__title">📋 Historial de Viaje</h2>
+	  </div>
+	  <div class="range-form">
+	    <div class="range-row">
+	      <label class="range-label">Desde</label>
+	      <input type="datetime-local" id="desde" class="range-input" />
+	    </div>
+	    <div class="range-row">
+		<label class="range-label">Hasta</label>
+		<input type="datetime-local" id="hasta" class="range-input" />
+	    </div>
+	    <div class="range-buttons">
+		 <button id="btn-historial" class="btn btn--primary">Ver historial</button>
+		 <button id="btn-vivo" class="btn btn--secondary">Ver en vivo</button>
+	    </div>
+	  </div>
+	</section>
 
         <!-- Map -->
         <div class="map-area">
