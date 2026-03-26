@@ -214,5 +214,4 @@ function conectarSSE() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 cargarConfig();
-cargarHistorial();
 conectarSSE();
