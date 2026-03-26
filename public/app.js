@@ -108,21 +108,12 @@ const elLatitud = document.getElementById("latitud");
 const elLongitud = document.getElementById("longitud");
 const elFecha = document.getElementById("fecha");
 const elHora = document.getElementById("hora");
-const elTabla = document.getElementById("tabla-body");
 const elEstado = document.getElementById("estado");
 const elStatusDot = document.getElementById("status-dot");
 const elMapTime = document.getElementById("map-time");
 const elMapCoords = document.getElementById("map-coords");
 
-// ─── Row selection ────────────────────────────────────────────────────────────
-elTabla.addEventListener("click", (e) => {
-  const row = e.target.closest("tr");
-  if (!row || row.classList.contains("empty-row")) return;
 
-  const prev = elTabla.querySelector("tr.selected");
-  if (prev) prev.classList.remove("selected");
-  row.classList.toggle("selected");
-});
 
 // ─── Actualizar posicion actual ───────────────────────────────────────────────
 function actualizarActual(data) {
