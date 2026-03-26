@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GPS Tracker</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -29,6 +26,7 @@
       <main class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
+
           <!-- Current Position Card -->
           <section class="card">
             <div class="card__header">
@@ -58,29 +56,27 @@
             </div>
           </section>
 
-          <!-- History Table -->
-          <section class="history-section">
+          <!-- History Range Card -->
+          <section class="card">
             <div class="card__header">
-              <h2 class="card__title">📋 Historial de Viaje</h2>
+              <h2 class="card__title">🕐 Consultar Recorrido</h2>
             </div>
-            <div class="history-table-wrap">
-              <table class="history-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Latitud</th>
-                    <th>Longitud</th>
-                  </tr>
-                </thead>
-                <tbody id="tabla-body">
-                  <tr class="empty-row">
-                    <td colspan="4">Sin datos</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="range-fields">
+              <div class="range-field">
+                <span class="range-field__label">Inicio</span>
+                <input type="datetime-local" id="fecha-inicio" class="input-datetime" step="1" />
+              </div>
+              <div class="range-field">
+                <span class="range-field__label">Fin</span>
+                <input type="datetime-local" id="fecha-fin" class="input-datetime"  step="1"/>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button id="btn-historial" class="btn btn--primary">Ver historial</button>
+              <button id="btn-vivo" class="btn btn--secondary">Ver en vivo</button>
             </div>
           </section>
+
         </aside>
 
         <!-- Map -->
@@ -103,7 +99,7 @@
 
       <!-- ── Footer ────────────────────────────────────────── -->
       <footer class="footer">
-        © 2026 <span>TaxiTracker GPS</span> — Real-Time Fleet Management
+        © 2026 <span>urbanTrack GPS</span> — Real-Time Fleet Management
       </footer>
     </div>
 

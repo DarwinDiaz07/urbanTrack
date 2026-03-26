@@ -24,20 +24,19 @@ function tsAHora(ts) {
   });
 }
 
-// ─── Mapa Leaflet (Dark Tiles) ───────────────────────────────────────────────
+// ─── Mapa Leaflet ─────────────────────────────────────────────────────────────
 const mapa = L.map("mapa").setView([4.5709, -74.2973], 6);
-let marcador = null;
-let polilinea = null;
-const coordenadas = [];
+let marcador   = null;
+let polilinea  = null;
+let coordenadas = [];
+let modoHistorial = false;
+let mapaInicializado = false; // controla el primer setView
 
-// OpenStreetMap tiles
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  maxZoom: 14,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19,
 }).addTo(mapa);
 
-// Yellow circle marker icon
 const taxiIcon = L.divIcon({
   className: "",
   html: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,120 +48,171 @@ const taxiIcon = L.divIcon({
 });
 
 function moverMarcador(lat, lon) {
+  const latlng = [lat, lon];
+
+  // Marcador
   if (marcador) {
-    marcador.setLatLng([lat, lon]);
+    marcador.setLatLng(latlng);
   } else {
-    marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa);
+    marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa);
   }
-  mapa.setView([lat, lon]);
 
-  coordenadas.push([lat, lon]);
+  // Centro del mapa: primer punto con setView, después panTo suave
+  if (!mapaInicializado) {
+    mapa.setView(latlng, 15);
+    mapaInicializado = true;
+  } else if (!modoHistorial) {
+    mapa.panTo(latlng);
+  }
 
-  if (polilinea) {
-    polilinea.setLatLngs(coordenadas);
-  } else {
-    polilinea = L.polyline(coordenadas, {
-      color: "#1A1A1A",
-      weight: 4,
-      opacity: 0.9,
-    }).addTo(mapa);
+  // Polilínea en vivo (solo fuera de modo historial)
+  if (!modoHistorial) {
+    coordenadas.push(latlng);
+    if (polilinea) {
+      polilinea.setLatLngs(coordenadas);
+    } else if (coordenadas.length >= 2) {
+      polilinea = L.polyline(coordenadas, {
+        color: "#000000",
+        weight: 4,
+        opacity: 0.9,
+      }).addTo(mapa);
+    }
   }
 }
 
 // ─── Referencias DOM ──────────────────────────────────────────────────────────
-const elLatitud = document.getElementById("latitud");
-const elLongitud = document.getElementById("longitud");
-const elFecha = document.getElementById("fecha");
-const elHora = document.getElementById("hora");
-const elTabla = document.getElementById("tabla-body");
-const elEstado = document.getElementById("estado");
-const elStatusDot = document.getElementById("status-dot");
-const elMapTime = document.getElementById("map-time");
-const elMapCoords = document.getElementById("map-coords");
+const elLatitud     = document.getElementById("latitud");
+const elLongitud    = document.getElementById("longitud");
+const elFecha       = document.getElementById("fecha");
+const elHora        = document.getElementById("hora");
+const elEstado      = document.getElementById("estado");
+const elStatusDot   = document.getElementById("status-dot");
+const elMapTime     = document.getElementById("map-time");
+const elMapCoords   = document.getElementById("map-coords");
+const elFechaInicio = document.getElementById("fecha-inicio");
+const elFechaFin    = document.getElementById("fecha-fin");
+const btnHistorial  = document.getElementById("btn-historial");
+const btnVivo       = document.getElementById("btn-vivo");
 
-// ─── Row selection ────────────────────────────────────────────────────────────
-elTabla.addEventListener("click", (e) => {
-  const row = e.target.closest("tr");
-  if (!row || row.classList.contains("empty-row")) return;
-
-  const prev = elTabla.querySelector("tr.selected");
-  if (prev) prev.classList.remove("selected");
-  row.classList.toggle("selected");
-});
-
-// ─── Actualizar posicion actual ───────────────────────────────────────────────
+// ─── Actualizar UI + mapa ─────────────────────────────────────────────────────
 function actualizarActual(data) {
-  const ts = Number(data.timestamp);
+  const ts  = Number(data.timestamp);
   const lat = Number(data.latitude).toFixed(6);
   const lon = Number(data.longitude).toFixed(6);
   const hora = tsAHora(ts);
 
-  elLatitud.textContent = lat;
-  elLongitud.textContent = lon;
-  elFecha.textContent = tsAFecha(ts);
-  elHora.textContent = hora;
-
-  // Map info overlay
-  elMapTime.textContent = hora;
+  elLatitud.textContent   = lat;
+  elLongitud.textContent  = lon;
+  elFecha.textContent     = tsAFecha(ts);
+  elHora.textContent      = hora;
+  elMapTime.textContent   = hora;
   elMapCoords.textContent = `${lat}, ${lon}`;
 
   moverMarcador(Number(data.latitude), Number(data.longitude));
 }
 
-// ─── Agregar fila al historial ────────────────────────────────────────────────
-function agregarFila(data, inicio = true) {
-  const vacio = elTabla.querySelector(".empty-row");
-  if (vacio) vacio.remove();
-
-  const ts = Number(data.timestamp);
-  const fila = document.createElement("tr");
-  fila.innerHTML = `
-    <td>${tsAFecha(ts)}</td>
-    <td>${tsAHora(ts)}</td>
-    <td>${Number(data.latitude).toFixed(6)}</td>
-    <td>${Number(data.longitude).toFixed(6)}</td>
-  `;
-
-  if (inicio) {
-    elTabla.insertBefore(fila, elTabla.firstChild);
-  } else {
-    elTabla.appendChild(fila);
-  }
-
-  const filas = elTabla.querySelectorAll("tr");
-  if (filas.length > 5) filas[filas.length - 1].remove();
-}
-
-// ─── Cargar historial inicial ─────────────────────────────────────────────────
+// ─── Cargar último punto desde DB ─────────────────────────────────────────────
 async function cargarHistorial() {
   try {
-    const res = await fetch("/api/history");
+    const res   = await fetch("/api/history");
     const datos = await res.json();
     if (datos.length === 0) return;
+    actualizarActual(datos[0]);
+  } catch (err) {
+    console.error("[HISTORIAL] Error:", err);
+  }
+}
 
-    // Invertir: la API devuelve DESC, necesitamos de más antiguo a más reciente
-    datos.reverse().forEach((d) => {
-      coordenadas.push([Number(d.latitude), Number(d.longitude)]);
-      agregarFila(d, false);
-    });
+// ─── Consultar recorrido por ventana de tiempo ────────────────────────────────
+async function consultarHistorial() {
+  const inicio = elFechaInicio.value;
+  const fin    = elFechaFin.value;
 
-    // Dibujar la polilínea con todos los puntos históricos de una vez
+  if (!inicio || !fin) {
+    alert("Selecciona una fecha y hora de inicio y fin.");
+    return;
+  }
+
+  const start = new Date(inicio).getTime();
+  const end   = new Date(fin).getTime();
+
+  if (start >= end) {
+    alert("La fecha de inicio debe ser anterior a la fecha de fin.");
+    return;
+  }
+
+  try {
+    const res   = await fetch(`/api/history/range?start=${start}&end=${end}`);
+    const datos = await res.json();
+
+    if (datos.length === 0) {
+      alert("No hay registros en ese rango de tiempo.");
+      return;
+    }
+
+    // Limpiar polilínea actual
+    if (polilinea) {
+      mapa.removeLayer(polilinea);
+      polilinea = null;
+    }
+
+    modoHistorial = true;
+
+    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
+
+    polilinea = L.polyline(puntos, {
+      color: "#FF6B00",
+      weight: 4,
+      opacity: 0.9,
+    }).addTo(mapa);
+
+    const ultimo = datos[datos.length - 1];
+    actualizarActual(ultimo);
+
+    mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
+
+  } catch (err) {
+    console.error("[HISTORIAL RANGE] Error:", err);
+  }
+}
+
+// ─── Volver a vista en vivo ───────────────────────────────────────────────────
+function verEnVivo() {
+  modoHistorial = false;
+
+  if (polilinea) {
+    mapa.removeLayer(polilinea);
+    polilinea = null;
+  }
+
+  // Reconstruir polilínea en vivo desde las coordenadas acumuladas
+  if (coordenadas.length >= 2) {
     polilinea = L.polyline(coordenadas, {
       color: "#000000",
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
+  }
 
-    // Mostrar el punto más reciente como posición actual y poner el marcador
-    const ultimo = datos[datos.length - 1];
-    actualizarActual(ultimo);
+  elFechaInicio.value = "";
+  elFechaFin.value    = "";
 
-    // Ajustar el mapa para ver todo el recorrido
-    if (coordenadas.length > 1) {
-      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
-    }
+  // Volver a centrar en último punto conocido
+  if (coordenadas.length > 0) {
+    const ultimo = coordenadas[coordenadas.length - 1];
+    mapa.setView(ultimo, 15);
+  }
+}
+
+// ─── Config dinámica ──────────────────────────────────────────────────────────
+async function cargarConfig() {
+  try {
+    const res    = await fetch("/api/config");
+    const config = await res.json();
+    document.title = config.title;
+    document.querySelector(".header__title").textContent = config.title;
   } catch (err) {
-    console.error("[HISTORIAL] Error:", err);
+    console.error("[CONFIG] Error:", err);
   }
 }
 
@@ -177,18 +227,29 @@ function conectarSSE() {
   };
 
   source.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    actualizarActual(data);
-    agregarFila(data, true);
-  };
+      try {
+        if (modoHistorial) return;
+        const data = JSON.parse(event.data);
+        actualizarActual(data);
+      } catch (e) {
+        console.error("[SSE] Error parseando evento:", e);
+      }
+    };
 
   source.onerror = () => {
     elEstado.textContent = "Desconectado";
     elStatusDot.classList.remove("status-dot--connected");
-    console.warn("[SSE] Conexion perdida, reintentando...");
+    console.warn("[SSE] Conexion perdida, reintentando en 3s...");
+    source.close();
+    setTimeout(conectarSSE, 3000);
   };
 }
 
+// ─── Eventos botones ──────────────────────────────────────────────────────────
+btnHistorial.addEventListener("click", consultarHistorial);
+btnVivo.addEventListener("click", verEnVivo);
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
+cargarConfig();
 cargarHistorial();
 conectarSSE();
