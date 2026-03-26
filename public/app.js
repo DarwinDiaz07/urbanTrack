@@ -24,16 +24,16 @@ function tsAHora(ts) {
   });
 }
 
-// ─── Mapa Leaflet (Dark Tiles) ───────────────────────────────────────────────
+// ─── Mapa Leaflet ─────────────────────────────────────────────────────────────
 const mapa = L.map("mapa").setView([4.5709, -74.2973], 6);
 let marcador = null;
 let polilinea = null;
+let ultimoPunto = null;
 const coordenadas = [];
 
 // OpenStreetMap tiles
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   maxZoom: 14,
 }).addTo(mapa);
 
@@ -48,7 +48,23 @@ const taxiIcon = L.divIcon({
   iconAnchor: [14, 14],
 });
 
-function moverMarcador(lat, lon) {
+// ─── OSRM: obtener ruta real por calles ───────────────────────────────────────
+async function obtenerRutaOSRM(desde, hasta) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${desde[1]},${desde[0]};${hasta[1]},${hasta[0]}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.code !== "Ok" || !data.routes.length) return null;
+    // Devuelve array de [lat, lon]
+    return data.routes[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+  } catch (err) {
+    console.warn("[OSRM] Error al consultar ruta:", err);
+    return null;
+  }
+}
+
+// ─── Mover marcador y extender polilínea por calles ──────────────────────────
+async function moverMarcador(lat, lon) {
   if (marcador) {
     marcador.setLatLng([lat, lon]);
   } else {
@@ -56,7 +72,25 @@ function moverMarcador(lat, lon) {
   }
   mapa.setView([lat, lon]);
 
-  coordenadas.push([lat, lon]);
+  const puntoActual = [lat, lon];
+
+  if (ultimoPunto) {
+    // Consultar OSRM para obtener la ruta real entre el punto anterior y el actual
+    const rutaCalles = await obtenerRutaOSRM(ultimoPunto, puntoActual);
+
+    if (rutaCalles) {
+      // Agregar todos los puntos de la ruta real
+      coordenadas.push(...rutaCalles);
+    } else {
+      // Si OSRM falla, caer a línea recta
+      coordenadas.push(puntoActual);
+    }
+  } else {
+    // Primer punto, solo agregarlo
+    coordenadas.push(puntoActual);
+  }
+
+  ultimoPunto = puntoActual;
 
   if (polilinea) {
     polilinea.setLatLngs(coordenadas);
@@ -102,7 +136,6 @@ function actualizarActual(data) {
   elFecha.textContent = tsAFecha(ts);
   elHora.textContent = hora;
 
-  // Map info overlay
   elMapTime.textContent = hora;
   elMapCoords.textContent = `${lat}, ${lon}`;
 
@@ -140,27 +173,36 @@ async function cargarHistorial() {
     const datos = await res.json();
     if (datos.length === 0) return;
 
-    // Invertir: la API devuelve DESC, necesitamos de más antiguo a más reciente
-    datos.reverse().forEach((d) => {
-      coordenadas.push([Number(d.latitude), Number(d.longitude)]);
-      agregarFila(d, false);
-    });
+    // Llenar la tabla con el historial
+    datos.forEach((d) => agregarFila(d, false));
 
-    // Dibujar la polilínea con todos los puntos históricos de una vez
-    polilinea = L.polyline(coordenadas, {
-      color: "#000000",
-      weight: 4,
-      opacity: 0.9,
-    }).addTo(mapa);
+    // Solo colocar el marcador en el último punto, sin dibujar polilínea
+    const ultimo = datos[0];
+    const lat = Number(ultimo.latitude);
+    const lon = Number(ultimo.longitude);
 
-    // Mostrar el punto más reciente como posición actual y poner el marcador
-    const ultimo = datos[datos.length - 1];
-    actualizarActual(ultimo);
-
-    // Ajustar el mapa para ver todo el recorrido
-    if (coordenadas.length > 1) {
-      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
+    if (marcador) {
+      marcador.setLatLng([lat, lon]);
+    } else {
+      marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa);
     }
+    mapa.setView([lat, lon], 14);
+
+    // Guardar el último punto conocido para que el SSE arranque desde ahí
+    ultimoPunto = [lat, lon];
+
+    // Actualizar panel de información
+    const ts = Number(ultimo.timestamp);
+    const latStr = lat.toFixed(6);
+    const lonStr = lon.toFixed(6);
+    const hora = tsAHora(ts);
+    elLatitud.textContent = latStr;
+    elLongitud.textContent = lonStr;
+    elFecha.textContent = tsAFecha(ts);
+    elHora.textContent = hora;
+    elMapTime.textContent = hora;
+    elMapCoords.textContent = `${latStr}, ${lonStr}`;
+
   } catch (err) {
     console.error("[HISTORIAL] Error:", err);
   }
@@ -171,7 +213,7 @@ async function cargarConfig() {
     const res = await fetch("/api/config");
     const config = await res.json();
     document.title = config.title;
-    document.querySelector("h1").textContent = config.title;
+    document.querySelector("h1") && (document.querySelector("h1").textContent = config.title);
   } catch (err) {
     console.error("[CONFIG] Error:", err);
   }
@@ -200,7 +242,6 @@ function conectarSSE() {
     source.close();
     setTimeout(conectarSSE, 3000);
   };
-
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
