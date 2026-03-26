@@ -161,7 +161,7 @@ async function consultarHistorial() {
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
 
     polilinea = L.polyline(puntos, {
-      color: "#FF6B00",
+      color: "#000000",
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
