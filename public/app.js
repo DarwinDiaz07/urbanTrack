@@ -108,21 +108,12 @@ const elLatitud = document.getElementById("latitud");
 const elLongitud = document.getElementById("longitud");
 const elFecha = document.getElementById("fecha");
 const elHora = document.getElementById("hora");
-const elTabla = document.getElementById("tabla-body");
 const elEstado = document.getElementById("estado");
 const elStatusDot = document.getElementById("status-dot");
 const elMapTime = document.getElementById("map-time");
 const elMapCoords = document.getElementById("map-coords");
 
-// ─── Row selection ────────────────────────────────────────────────────────────
-elTabla.addEventListener("click", (e) => {
-  const row = e.target.closest("tr");
-  if (!row || row.classList.contains("empty-row")) return;
 
-  const prev = elTabla.querySelector("tr.selected");
-  if (prev) prev.classList.remove("selected");
-  row.classList.toggle("selected");
-});
 
 // ─── Actualizar posicion actual ───────────────────────────────────────────────
 function actualizarActual(data) {
@@ -142,29 +133,6 @@ function actualizarActual(data) {
   moverMarcador(Number(data.latitude), Number(data.longitude));
 }
 
-// ─── Agregar fila al historial ────────────────────────────────────────────────
-function agregarFila(data, inicio = true) {
-  const vacio = elTabla.querySelector(".empty-row");
-  if (vacio) vacio.remove();
-
-  const ts = Number(data.timestamp);
-  const fila = document.createElement("tr");
-  fila.innerHTML = `
-    <td>${tsAFecha(ts)}</td>
-    <td>${tsAHora(ts)}</td>
-    <td>${Number(data.latitude).toFixed(6)}</td>
-    <td>${Number(data.longitude).toFixed(6)}</td>
-  `;
-
-  if (inicio) {
-    elTabla.insertBefore(fila, elTabla.firstChild);
-  } else {
-    elTabla.appendChild(fila);
-  }
-
-  const filas = elTabla.querySelectorAll("tr");
-  if (filas.length > 5) filas[filas.length - 1].remove();
-}
 
 // ─── Cargar historial inicial ─────────────────────────────────────────────────
 async function cargarHistorial() {
@@ -246,5 +214,4 @@ function conectarSSE() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 cargarConfig();
-cargarHistorial();
 conectarSSE();
