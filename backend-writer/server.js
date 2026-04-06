@@ -75,6 +75,18 @@ app.get("/api/history/range", async (req, res) => {
   res.json(result.rows);
 });
 
+// ─── API History Range ────────────────────────────────────────────────────────
+app.get("/api/history/range", async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) {
+    return res.status(400).json({ error: "start y end son requeridos" });
+  }
+  const result = await pool.query(
+    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
+    [start, end]
+  );
+  res.json(result.rows);
+});
 // ─── Servidor UDP ─────────────────────────────────────────────────────────────
 const udpServer = dgram.createSocket("udp4");
 
@@ -106,10 +118,9 @@ udpServer.on("message", async (msg, rinfo) => {
     `[DB] Insertado: timestamp=${timestamp} lat=${latitude} lon=${longitude}`,
   );
 
-  await pool.query(
-    "SELECT pg_notify('gps_update', $1)",
-    [JSON.stringify({ timestamp, latitude, longitude })]
-  );
+  await pool.query("SELECT pg_notify('gps_update', $1)", [
+    JSON.stringify({ timestamp, latitude, longitude }),
+  ]);
 
   emitir({ timestamp, latitude, longitude });
 });
@@ -122,6 +133,8 @@ udpServer.on("error", (err) => {
 udpServer.bind(UDP_PORT, () => {
   console.log(`[UDP] Escuchando en puerto ${UDP_PORT}`);
 });
+
+
 
 // ─── Iniciar servidor web ─────────────────────────────────────────────────────
 inicializar()
