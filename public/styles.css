@@ -235,7 +235,7 @@ html, body {
   font-weight: 700;
 }
 
-/* ── Time Range Controls — columna única ───────────────────────────────── */
+/* ── Time Range Controls ───────────────────────────────────────────────── */
 .range-fields {
   display: flex;
   flex-direction: column;
@@ -431,105 +431,235 @@ html, body {
   box-shadow: var(--shadow-card), 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
-/* ── Range Form ────────────────────────────────────────────────────────── */
-.range-form {
-  padding: 14px 20px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.range-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.range-label {
-  font-size: 0.75rem;
-  color: var(--gray-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 500;
-}
-
-.range-input {
-  background: var(--black-primary);
-  border: 1px solid var(--gray-dark);
-  border-radius: 8px;
-  color: var(--text-light);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  width: 100%;
-  transition: border-color var(--transition);
-}
-
-.range-input:focus {
-  outline: none;
-  border-color: var(--yellow-primary);
-}
-
-.range-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.btn {
-  flex: 1;
-  padding: 9px 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity var(--transition);
-}
-
-.btn:hover {
-  opacity: 0.85;
-}
-
-.btn--primary {
-  background: var(--yellow-primary);
-  color: var(--black-primary);
-}
-
-.btn--secondary {
-  background: var(--gray-dark);
-  color: var(--text-light);
-}
-
-/* ── Responsive ────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  body {
-    overflow: auto;
-  }
-
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Tablets (≤ 900px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
   .dashboard {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-columns: 280px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Móvil (≤ 768px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto;            /* Permitir scroll en móvil */
     height: auto;
+    min-height: 100vh;
   }
 
-  .sidebar {
-    overflow-y: visible;
+  .app {
+    height: auto;
+    min-height: 100vh;
   }
 
-  .map-area {
-    min-height: 400px;
-  }
-
-  .map-container {
-    min-height: 400px;
-  }
-
+  /* Header compacto */
   .header {
-    padding: 0 16px;
+    height: 50px;
+    padding: 0 14px;
+  }
+
+  .header__icon {
+    font-size: 1.3rem;
   }
 
   .header__title {
     font-size: 1.1rem;
+  }
+
+  .header__status {
+    font-size: 0.78rem;
+  }
+
+  .taxi-stripe {
+    height: 4px;
+    background-size: 10px 10px;
+  }
+
+  /* Dashboard: columna única, mapa PRIMERO */
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    padding: 12px;
+    min-height: auto;
+  }
+
+  /* El mapa aparece primero visualmente */
+  .map-area {
+    order: -1;
+    min-height: 55vh;        /* Ocupa buena parte de la pantalla */
+    height: 55vh;
+  }
+
+  .map-container {
+    min-height: 100%;
+    border-radius: 10px;
+  }
+
+  /* Sidebar debajo del mapa */
+  .sidebar {
+    overflow-y: visible;
+    gap: 12px;
+  }
+
+  /* Cards más compactas */
+  .card {
+    padding: 14px 16px;
+    border-radius: 10px;
+  }
+
+  .card__header {
+    margin-bottom: 10px;
+  }
+
+  .card__title {
+    font-size: 0.88rem;
+  }
+
+  /* Data grid: una fila con scroll horizontal si es necesario */
+  .data-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .data-item__value {
+    font-size: 0.92rem;
+  }
+
+  .data-item__value--coord {
+    font-size: 0.95rem;
+  }
+
+  /* Inputs del historial */
+  .input-datetime {
+    font-size: 0.78rem;
+    padding: 10px;             /* Más padding para touch */
+  }
+
+  /* Botones lado a lado en móvil */
+  .btn-group {
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    padding: 12px 10px;        /* Más alto para touch */
+    font-size: 0.8rem;
+    flex: 1;
+  }
+
+  /* Map info box: abajo-izquierda para no tapar controles de zoom */
+  .map-info {
+    top: auto;
+    bottom: 8px;
+    left: 8px;
+    right: auto;
+    padding: 8px 10px;
+    font-size: 0.68rem;
+    min-width: 160px;
+    border-radius: 8px;
+  }
+
+  .map-info__label {
+    font-size: 0.65rem;
+  }
+
+  .map-info__value {
+    font-size: 0.7rem;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 8px 14px;
+    font-size: 0.7rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Móvil pequeño (≤ 420px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 420px) {
+  .header {
+    height: 46px;
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .header__icon {
+    font-size: 1.1rem;
+  }
+
+  .header__title {
+    font-size: 0.95rem;
+    letter-spacing: 0;
+  }
+
+  .status-text {
+    display: none;             /* Solo el dot en pantallas muy pequeñas */
+  }
+
+  .dashboard {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .map-area {
+    min-height: 50vh;
+    height: 50vh;
+  }
+
+  .card {
+    padding: 12px 14px;
+    border-left-width: 3px;
+  }
+
+  .data-grid {
+    gap: 6px;
+  }
+
+  .data-item__label {
+    font-size: 0.68rem;
+  }
+
+  .data-item__value {
+    font-size: 0.85rem;
+  }
+
+  .data-item__value--coord {
+    font-size: 0.88rem;
+  }
+
+  /* Botones vuelven a columna en pantallas muy chicas */
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .map-info {
+    min-width: 140px;
+    padding: 6px 8px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Landscape en móvil
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) and (orientation: landscape) {
+  .map-area {
+    min-height: 60vh;
+    height: 60vh;
+  }
+
+  .header {
+    height: 42px;
+  }
+
+  .taxi-stripe {
+    height: 3px;
   }
 }

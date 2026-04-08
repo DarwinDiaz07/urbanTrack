@@ -210,7 +210,6 @@ async function cargarConfig() {
     const res    = await fetch("/api/config");
     const config = await res.json();
     document.title = config.title;
-    document.querySelector(".header__title").textContent = config.title;
   } catch (err) {
     console.error("[CONFIG] Error:", err);
   }
