@@ -2,13 +2,24 @@ const ZONA = "America/Bogota";
 
 function tsAFecha(ts) {
   return new Date(Number(ts))
-    .toLocaleDateString("es-CO", { timeZone: ZONA, year: "numeric", month: "2-digit", day: "2-digit" })
-    .split("/").reverse().join("-");
+    .toLocaleDateString("es-CO", {
+      timeZone: ZONA,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+    .split("/")
+    .reverse()
+    .join("-");
 }
 
 function tsAHora(ts) {
   return new Date(Number(ts)).toLocaleTimeString("es-CO", {
-    timeZone: ZONA, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    timeZone: ZONA,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
   });
 }
 
@@ -18,8 +29,16 @@ function toLocalDatetimeString(date) {
   return local.toISOString().slice(0, 19);
 }
 
-function inicioDelDia(date) { const d = new Date(date); d.setHours(0, 0, 0, 0); return d; }
-function finDelDia(date) { const d = new Date(date); d.setHours(23, 59, 59, 0); return d; }
+function inicioDelDia(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function finDelDia(date) {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 0);
+  return d;
+}
 
 // ─── Mapa ─────────────────────────────────────────────────────────────────────
 const mapa = L.map("mapa").setView([4.5709, -74.2973], 6);
@@ -31,7 +50,8 @@ let mapaInicializado = false;
 let tabActual = "recorrido"; // "recorrido" o "lugar"
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   maxZoom: 19,
 }).addTo(mapa);
 
@@ -47,15 +67,27 @@ const taxiIcon = L.divIcon({
 
 function moverMarcador(lat, lon) {
   const latlng = [lat, lon];
-  if (marcador) { marcador.setLatLng(latlng); }
-  else { marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa); }
-  if (!mapaInicializado) { mapa.setView(latlng, 15); mapaInicializado = true; }
-  else if (!modoHistorial) { mapa.panTo(latlng); }
+  if (marcador) {
+    marcador.setLatLng(latlng);
+  } else {
+    marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa);
+  }
+  if (!mapaInicializado) {
+    mapa.setView(latlng, 15);
+    mapaInicializado = true;
+  } else if (!modoHistorial) {
+    mapa.panTo(latlng);
+  }
   if (!modoHistorial) {
     coordenadas.push(latlng);
-    if (polilinea) { polilinea.setLatLngs(coordenadas); }
-    else if (coordenadas.length >= 2) {
-      polilinea = L.polyline(coordenadas, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+    if (polilinea) {
+      polilinea.setLatLngs(coordenadas);
+    } else if (coordenadas.length >= 2) {
+      polilinea = L.polyline(coordenadas, {
+        color: "#000000",
+        weight: 4,
+        opacity: 0.9,
+      }).addTo(mapa);
     }
   }
 }
@@ -111,7 +143,8 @@ tabLugar.addEventListener("click", () => {
 elFechaInicio.addEventListener("change", () => {
   if (elFechaInicio.value) {
     elFechaFin.min = elFechaInicio.value;
-    if (elFechaFin.value && elFechaFin.value < elFechaInicio.value) elFechaFin.value = elFechaInicio.value;
+    if (elFechaFin.value && elFechaFin.value < elFechaInicio.value)
+      elFechaFin.value = elFechaInicio.value;
   }
   limpiarQuickRangeActivo();
 });
@@ -119,7 +152,8 @@ elFechaInicio.addEventListener("change", () => {
 elFechaFin.addEventListener("change", () => {
   if (elFechaFin.value) {
     elFechaInicio.max = elFechaFin.value;
-    if (elFechaInicio.value && elFechaInicio.value > elFechaFin.value) elFechaInicio.value = elFechaFin.value;
+    if (elFechaInicio.value && elFechaInicio.value > elFechaFin.value)
+      elFechaInicio.value = elFechaFin.value;
   }
   limpiarQuickRangeActivo();
 });
@@ -145,12 +179,16 @@ btnHoy.addEventListener("click", () => {
   consultarHistorial();
 });
 btnSemana.addEventListener("click", () => {
-  const h = new Date(); const a = new Date(h); a.setDate(a.getDate() - 7);
+  const h = new Date();
+  const a = new Date(h);
+  a.setDate(a.getDate() - 7);
   setearRango(inicioDelDia(a), finDelDia(h), btnSemana);
   consultarHistorial();
 });
 btnMes.addEventListener("click", () => {
-  const h = new Date(); const a = new Date(h); a.setDate(a.getDate() - 30);
+  const h = new Date();
+  const a = new Date(h);
+  a.setDate(a.getDate() - 30);
   setearRango(inicioDelDia(a), finDelDia(h), btnMes);
   consultarHistorial();
 });
@@ -199,7 +237,9 @@ async function cargarHistorial() {
     const datos = await res.json();
     if (datos.length === 0) return;
     actualizarActual(datos[0]);
-  } catch (err) { console.error("[HISTORIAL] Error:", err); }
+  } catch (err) {
+    console.error("[HISTORIAL] Error:", err);
+  }
 }
 
 // ─── Limpiar capas ────────────────────────────────────────────────────────────
@@ -208,13 +248,25 @@ let circuloBusqueda = null;
 let polilineaBusqueda = null;
 
 function limpiarCapasBusqueda() {
-  if (marcadorBusqueda) { mapa.removeLayer(marcadorBusqueda); marcadorBusqueda = null; }
-  if (circuloBusqueda) { mapa.removeLayer(circuloBusqueda); circuloBusqueda = null; }
-  if (polilineaBusqueda) { mapa.removeLayer(polilineaBusqueda); polilineaBusqueda = null; }
+  if (marcadorBusqueda) {
+    mapa.removeLayer(marcadorBusqueda);
+    marcadorBusqueda = null;
+  }
+  if (circuloBusqueda) {
+    mapa.removeLayer(circuloBusqueda);
+    circuloBusqueda = null;
+  }
+  if (polilineaBusqueda) {
+    mapa.removeLayer(polilineaBusqueda);
+    polilineaBusqueda = null;
+  }
 }
 
 function limpiarPolilineaHistorial() {
-  if (polilinea) { mapa.removeLayer(polilinea); polilinea = null; }
+  if (polilinea) {
+    mapa.removeLayer(polilinea);
+    polilinea = null;
+  }
 }
 
 // ─── Consultar recorrido por fecha ────────────────────────────────────────────
@@ -247,14 +299,20 @@ async function consultarHistorial() {
     if (datos.length === 0) return;
 
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
-    polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+    polilinea = L.polyline(puntos, {
+      color: "#000000",
+      weight: 4,
+      opacity: 0.9,
+    }).addTo(mapa);
     actualizarActual(datos[datos.length - 1]);
-    mapa.setZoom(2);
-    setTimeout(() => {
-      mapa.invalidateSize();
-      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40], maxZoom: 18, animate: true });
-    }, 50);
-  } catch (err) { console.error("[HISTORIAL] Error:", err); }
+    mapa.flyToBounds(polilinea.getBounds(), {
+      padding: [40, 40],
+      maxZoom: 18,
+      duration: 0.5,
+    });
+  } catch (err) {
+    console.error("[HISTORIAL] Error:", err);
+  }
 }
 
 // ─── Volver a en vivo ─────────────────────────────────────────────────────────
@@ -274,7 +332,11 @@ function verEnVivo() {
 
   // Reconstruir polilinea en vivo
   if (coordenadas.length >= 2) {
-    polilinea = L.polyline(coordenadas, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+    polilinea = L.polyline(coordenadas, {
+      color: "#000000",
+      weight: 4,
+      opacity: 0.9,
+    }).addTo(mapa);
   }
 
   elFechaInicio.value = "";
@@ -301,8 +363,12 @@ async function buscarPorCoordenadas(lat, lon, nombreLugar) {
   limpiarCapasBusqueda();
 
   circuloBusqueda = L.circle([lat, lon], {
-    radius: radio, color: "#F44336", fillColor: "#F44336",
-    fillOpacity: 0.12, weight: 2, dashArray: "6 4",
+    radius: radio,
+    color: "#F44336",
+    fillColor: "#F44336",
+    fillOpacity: 0.12,
+    weight: 2,
+    dashArray: "6 4",
   }).addTo(mapa);
 
   marcadorBusqueda = L.marker([lat, lon]).addTo(mapa);
@@ -318,9 +384,12 @@ async function buscarPorCoordenadas(lat, lon, nombreLugar) {
     let html = `<div class="search-result__lugar">${nombreLugar}</div>`;
 
     if (datos.length === 0) {
-      html += '<span class="search-result--empty">El vehiculo nunca paso por esta zona.</span>';
+      html +=
+        '<span class="search-result--empty">El vehiculo nunca paso por esta zona.</span>';
       resultadoBusqueda.innerHTML = html;
-      marcadorBusqueda.bindPopup(`<b>${nombreLugar}</b><br>Sin registros.`).openPopup();
+      marcadorBusqueda
+        .bindPopup(`<b>${nombreLugar}</b><br>Sin registros.`)
+        .openPopup();
       return;
     }
 
@@ -331,13 +400,15 @@ async function buscarPorCoordenadas(lat, lon, nombreLugar) {
         ${tsAFecha(d.timestamp)}  ${tsAHora(d.timestamp)}
       </div>`;
     });
-    html += '</div>';
+    html += "</div>";
 
     resultadoBusqueda.innerHTML = html;
 
     // Popup
     let popup = `<b>${nombreLugar}</b><br><b>${datos.length}</b> paso(s)<br>`;
-    datos.slice(0, 3).forEach((d) => { popup += `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}<br>`; });
+    datos.slice(0, 3).forEach((d) => {
+      popup += `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}<br>`;
+    });
     if (datos.length > 3) popup += `<i>Selecciona en la lista</i>`;
     marcadorBusqueda.bindPopup(popup).openPopup();
 
@@ -345,14 +416,17 @@ async function buscarPorCoordenadas(lat, lon, nombreLugar) {
     const items = resultadoBusqueda.querySelectorAll(".search-result__item");
     items.forEach((item) => {
       item.addEventListener("click", () => {
-        items.forEach((el) => el.classList.remove("search-result__item--selected"));
+        items.forEach((el) =>
+          el.classList.remove("search-result__item--selected"),
+        );
         item.classList.add("search-result__item--selected");
         graficarVentana(parseInt(item.dataset.ts));
       });
     });
   } catch (err) {
     console.error("[BUSQUEDA] Error:", err);
-    resultadoBusqueda.innerHTML = '<span class="search-result--empty">Error al buscar.</span>';
+    resultadoBusqueda.innerHTML =
+      '<span class="search-result--empty">Error al buscar.</span>';
   }
 }
 
@@ -361,7 +435,10 @@ async function graficarVentana(ts) {
   const start = ts - VENTANA;
   const end = ts + VENTANA;
 
-  if (polilineaBusqueda) { mapa.removeLayer(polilineaBusqueda); polilineaBusqueda = null; }
+  if (polilineaBusqueda) {
+    mapa.removeLayer(polilineaBusqueda);
+    polilineaBusqueda = null;
+  }
   limpiarPolilineaHistorial();
 
   try {
@@ -371,40 +448,55 @@ async function graficarVentana(ts) {
 
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
     polilineaBusqueda = L.polyline(puntos, {
-      color: "#000", weight: 4, opacity: 0.85, dashArray: "8 4",
+      color: "#000",
+      weight: 4,
+      opacity: 0.85,
+      dashArray: "8 4",
     }).addTo(mapa);
 
     const bounds = polilineaBusqueda.getBounds();
     if (circuloBusqueda) bounds.extend(circuloBusqueda.getBounds());
     mapa.fitBounds(bounds, { padding: [50, 50] });
 
-    const punto = datos.find((d) => Number(d.timestamp) === ts) || datos[datos.length - 1];
+    const punto =
+      datos.find((d) => Number(d.timestamp) === ts) || datos[datos.length - 1];
     actualizarActual(punto);
-  } catch (err) { console.error("[VENTANA] Error:", err); }
+  } catch (err) {
+    console.error("[VENTANA] Error:", err);
+  }
 }
 
 async function buscarLugar() {
   const texto = inputLugar.value.trim();
   if (!texto) return;
 
-  resultadoBusqueda.innerHTML = '<span class="search-result__loading">Buscando...</span>';
+  resultadoBusqueda.innerHTML =
+    '<span class="search-result__loading">Buscando...</span>';
 
   try {
     const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(texto + ", Barranquilla, Colombia")}&limit=1`;
-    const geoRes = await fetch(geoUrl, { headers: { "Accept-Language": "es" } });
+    const geoRes = await fetch(geoUrl, {
+      headers: { "Accept-Language": "es" },
+    });
     const geoData = await geoRes.json();
 
     if (geoData.length === 0) {
-      resultadoBusqueda.innerHTML = '<span class="search-result--empty">No se encontro el lugar.</span>';
+      resultadoBusqueda.innerHTML =
+        '<span class="search-result--empty">No se encontro el lugar.</span>';
       return;
     }
 
     const lugar = geoData[0];
     const nombreLugar = lugar.display_name.split(",").slice(0, 3).join(",");
-    await buscarPorCoordenadas(parseFloat(lugar.lat), parseFloat(lugar.lon), nombreLugar);
+    await buscarPorCoordenadas(
+      parseFloat(lugar.lat),
+      parseFloat(lugar.lon),
+      nombreLugar,
+    );
   } catch (err) {
     console.error("[GEOCODE] Error:", err);
-    resultadoBusqueda.innerHTML = '<span class="search-result--empty">Error al buscar.</span>';
+    resultadoBusqueda.innerHTML =
+      '<span class="search-result--empty">Error al buscar.</span>';
   }
 }
 
@@ -413,10 +505,16 @@ mapa.on("click", async (e) => {
   if (tabActual !== "lugar") return;
   const { lat, lng } = e.latlng;
   inputLugar.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  await buscarPorCoordenadas(lat, lng, `Punto: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  await buscarPorCoordenadas(
+    lat,
+    lng,
+    `Punto: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+  );
 });
 
-inputLugar.addEventListener("keydown", (e) => { if (e.key === "Enter") buscarLugar(); });
+inputLugar.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") buscarLugar();
+});
 btnBuscarLugar.addEventListener("click", buscarLugar);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -425,16 +523,25 @@ async function cargarConfig() {
     const res = await fetch("/api/config");
     const config = await res.json();
     document.title = config.title;
-  } catch (err) { console.error("[CONFIG] Error:", err); }
+  } catch (err) {
+    console.error("[CONFIG] Error:", err);
+  }
 }
 
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function conectarSSE() {
   const source = new EventSource("/api/stream");
-  source.onopen = () => { elEstado.textContent = "Conectado"; elStatusDot.classList.add("status-dot--connected"); };
+  source.onopen = () => {
+    elEstado.textContent = "Conectado";
+    elStatusDot.classList.add("status-dot--connected");
+  };
   source.onmessage = (event) => {
-    try { if (modoHistorial) return; actualizarActual(JSON.parse(event.data)); }
-    catch (e) { console.error("[SSE] Error:", e); }
+    try {
+      if (modoHistorial) return;
+      actualizarActual(JSON.parse(event.data));
+    } catch (e) {
+      console.error("[SSE] Error:", e);
+    }
   };
   source.onerror = () => {
     elEstado.textContent = "Desconectado";
