@@ -325,8 +325,14 @@ function verEnVivo() {
   panelRecorrido.classList.remove("tab-content--hidden");
   panelLugar.classList.add("tab-content--hidden");
 
-  // Resetear coordenadas — polilinea empieza desde cero
-  coordenadas = [];
+  // Resetear coordenadas con el ultimo punto como origen
+  if (marcador) {
+    const pos = marcador.getLatLng();
+    coordenadas = [[pos.lat, pos.lng]];
+    mapa.setView([pos.lat, pos.lng], 15);
+  } else {
+    coordenadas = [];
+  }
   polilinea = null;
 
   elFechaInicio.value = "";
@@ -336,14 +342,7 @@ function verEnVivo() {
   limpiarQuickRangeActivo();
   resultadoBusqueda.innerHTML = "";
   inputLugar.value = "";
-
-  // Centrar en ultimo punto conocido y continuar desde ahi
-  if (marcador) {
-    const pos = marcador.getLatLng();
-    mapa.setView([pos.lat, pos.lng], 15);
-  }
 }
-
 // ─── Busqueda por lugar ───────────────────────────────────────────────────────
 async function buscarPorCoordenadas(lat, lon, nombreLugar) {
   const radio = 150;
