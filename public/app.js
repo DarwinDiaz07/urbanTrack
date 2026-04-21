@@ -249,10 +249,11 @@ async function consultarHistorial() {
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
     polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
     actualizarActual(datos[datos.length - 1]);
+    mapa.setZoom(2);
     setTimeout(() => {
       mapa.invalidateSize();
-      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40], maxZoom: 18 });
-    }, 100);
+      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40], maxZoom: 18, animate: true });
+    }, 50);
   } catch (err) { console.error("[HISTORIAL] Error:", err); }
 }
 
