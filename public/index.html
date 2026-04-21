@@ -54,39 +54,51 @@
 
           <section class="card">
             <div class="card__header">
-              <h2 class="card__title">🕐 Consultar Recorrido</h2>
+              <h2 class="card__title">🕐 Historial</h2>
             </div>
-            <div class="quick-range">
-              <button class="quick-range__btn" id="btn-hoy">Hoy</button>
-              <button class="quick-range__btn" id="btn-semana">1 semana</button>
-              <button class="quick-range__btn" id="btn-mes">1 mes</button>
+
+            <!-- Tab buttons -->
+            <div class="tab-group">
+              <button class="tab-btn tab-btn--active" id="tab-recorrido">Por fecha</button>
+              <button class="tab-btn" id="tab-lugar">Por lugar</button>
             </div>
-            <div class="range-fields">
-              <div class="range-field">
-                <span class="range-field__label">Inicio</span>
-                <input type="datetime-local" id="fecha-inicio" class="input-datetime" step="1" />
+
+            <!-- Tab: Por fecha -->
+            <div class="tab-content" id="panel-recorrido">
+              <div class="quick-range">
+                <button class="quick-range__btn" id="btn-hoy">Hoy</button>
+                <button class="quick-range__btn" id="btn-semana">1 semana</button>
+                <button class="quick-range__btn" id="btn-mes">1 mes</button>
               </div>
-              <div class="range-field">
-                <span class="range-field__label">Fin</span>
-                <input type="datetime-local" id="fecha-fin" class="input-datetime" step="1" />
+              <div class="range-fields">
+                <div class="range-field">
+                  <span class="range-field__label">Inicio</span>
+                  <input type="datetime-local" id="fecha-inicio" class="input-datetime" step="1" />
+                </div>
+                <div class="range-field">
+                  <span class="range-field__label">Fin</span>
+                  <input type="datetime-local" id="fecha-fin" class="input-datetime" step="1" />
+                </div>
+              </div>
+              <div class="btn-group">
+                <button id="btn-historial" class="btn btn--primary">Ver recorrido</button>
               </div>
             </div>
-            <div class="btn-group">
-              <button id="btn-historial" class="btn btn--primary">Ver historial</button>
+
+            <!-- Tab: Por lugar -->
+            <div class="tab-content tab-content--hidden" id="panel-lugar">
+              <p class="search-hint">Escribe una dirección o haz clic en el mapa para buscar cuándo pasó el vehículo por esa zona.</p>
+              <div class="search-field">
+                <input type="text" id="input-lugar" class="input-lugar" placeholder="Ej: CC Buenavista, Calle 72..." />
+                <button id="btn-buscar-lugar" class="btn btn--primary btn--search">Buscar</button>
+              </div>
+              <div id="resultado-busqueda" class="search-result"></div>
+            </div>
+
+            <!-- Boton volver a vivo (siempre visible) -->
+            <div class="btn-vivo-wrap">
               <button id="btn-vivo" class="btn btn--secondary btn--active">Ver en vivo</button>
             </div>
-          </section>
-
-          <section class="card" id="card-busqueda">
-            <div class="card__header">
-              <h2 class="card__title">🔍 ¿Cuándo pasó por aquí?</h2>
-            </div>
-            <p class="search-hint">Busca por dirección o haz clic en el mapa en modo historial</p>
-            <div class="search-field">
-              <input type="text" id="input-lugar" class="input-lugar" placeholder="Ej: CC Buenavista, Calle 72 con 46..." />
-              <button id="btn-buscar-lugar" class="btn btn--primary btn--search">Buscar</button>
-            </div>
-            <div id="resultado-busqueda" class="search-result"></div>
           </section>
 
         </aside>
