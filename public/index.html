@@ -13,7 +13,7 @@
       <header class="header">
         <div class="header__brand">
           <span class="header__icon">🚕</span>
-          <span class="header__title">UrbanTrack</span>
+          <span class="header__title">urbanTrack</span>
         </div>
         <div class="header__status">
           <span class="status-dot" id="status-dot"></span>
@@ -61,6 +61,14 @@
             <div class="card__header">
               <h2 class="card__title">🕐 Consultar Recorrido</h2>
             </div>
+
+            <!-- Quick range buttons -->
+            <div class="quick-range">
+              <button class="quick-range__btn" id="btn-hoy">Hoy</button>
+              <button class="quick-range__btn" id="btn-semana">1 semana</button>
+              <button class="quick-range__btn" id="btn-mes">1 mes</button>
+            </div>
+
             <div class="range-fields">
               <div class="range-field">
                 <span class="range-field__label">Inicio</span>
@@ -68,13 +76,25 @@
               </div>
               <div class="range-field">
                 <span class="range-field__label">Fin</span>
-                <input type="datetime-local" id="fecha-fin" class="input-datetime"  step="1"/>
+                <input type="datetime-local" id="fecha-fin" class="input-datetime" step="1" />
               </div>
             </div>
             <div class="btn-group">
               <button id="btn-historial" class="btn btn--primary">Ver historial</button>
-              <button id="btn-vivo" class="btn btn--secondary">Ver en vivo</button>
+              <button id="btn-vivo" class="btn btn--secondary btn--active">Ver en vivo</button>
             </div>
+          </section>
+
+          <!-- Location Search Card -->
+          <section class="card" id="card-busqueda">
+            <div class="card__header">
+              <h2 class="card__title">🔍 ¿Cuándo pasó por aquí?</h2>
+            </div>
+            <div class="search-field">
+              <input type="text" id="input-lugar" class="input-lugar" placeholder="Ej: Centro Comercial Buenavista, Calle 72..." />
+              <button id="btn-buscar-lugar" class="btn btn--primary btn--search">Buscar</button>
+            </div>
+            <div id="resultado-busqueda" class="search-result"></div>
           </section>
 
         </aside>
@@ -85,12 +105,8 @@
             <div id="mapa"></div>
             <div class="map-info">
               <div class="map-info__row">
-                <span class="map-info__label">Última actualización</span>
-                <span class="map-info__value" id="map-time">--:--:--</span>
-              </div>
-              <div class="map-info__row">
-                <span class="map-info__label">Coordenadas</span>
-                <span class="map-info__value" id="map-coords">—, —</span>
+                <span class="map-info__label">Modo</span>
+                <span class="map-info__value map-info__value--live" id="map-mode">EN VIVO</span>
               </div>
             </div>
           </div>

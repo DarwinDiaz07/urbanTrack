@@ -134,7 +134,7 @@ html, body {
 .dashboard {
   flex: 1;
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 340px 1fr;
   gap: 16px;
   padding: 16px;
   min-height: 0;
@@ -235,6 +235,37 @@ html, body {
   font-weight: 700;
 }
 
+/* ── Quick Range Buttons ───────────────────────────────────────────────── */
+.quick-range {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.quick-range__btn {
+  flex: 1;
+  padding: 6px 4px;
+  background: var(--gray-dark);
+  border: 1px solid var(--gray-medium);
+  border-radius: 6px;
+  color: var(--text-light);
+  font-family: var(--font-main);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.quick-range__btn:hover {
+  background: var(--gray-medium);
+}
+
+.quick-range__btn--active {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+  border-color: var(--yellow-primary);
+}
+
 /* ── Time Range Controls ───────────────────────────────────────────────── */
 .range-fields {
   display: flex;
@@ -295,7 +326,7 @@ html, body {
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition), transform var(--transition);
+  transition: background var(--transition), transform var(--transition), opacity var(--transition);
   letter-spacing: 0.3px;
 }
 
@@ -320,6 +351,94 @@ html, body {
 
 .btn--secondary:hover {
   background: var(--gray-medium);
+}
+
+/* Active/Inactive button states */
+.btn--active {
+  opacity: 1;
+}
+
+.btn--inactive {
+  opacity: 0.35;
+}
+
+/* ── Search Field ──────────────────────────────────────────────────────── */
+.search-field {
+  display: flex;
+  gap: 8px;
+}
+
+.input-lugar {
+  flex: 1;
+  background: var(--black-primary);
+  border: 1px solid var(--gray-dark);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.input-lugar:focus {
+  border-color: var(--yellow-primary);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.15);
+}
+
+.input-lugar::placeholder {
+  color: var(--gray-medium);
+  font-size: 0.72rem;
+}
+
+.btn--search {
+  flex-shrink: 0;
+  width: auto;
+  padding: 8px 14px;
+  font-size: 0.75rem;
+}
+
+/* Search results */
+.search-result {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.search-result--empty {
+  color: var(--gray-medium);
+  font-style: italic;
+}
+
+.search-result__item {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--gray-dark);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.search-result__item:last-child {
+  border-bottom: none;
+}
+
+.search-result__more {
+  color: var(--gray-medium);
+  font-style: italic;
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+
+.search-result__lugar {
+  color: var(--yellow-primary);
+  font-weight: 600;
+  font-family: var(--font-main);
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.search-result__loading {
+  color: var(--gray-medium);
 }
 
 /* ── Map Area ──────────────────────────────────────────────────────────── */
@@ -355,33 +474,39 @@ html, body {
   backdrop-filter: blur(8px);
   border: 1px solid var(--gray-dark);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   font-size: 0.75rem;
   color: var(--text-light);
-  min-width: 180px;
+  min-width: 140px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .map-info__row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
-}
-
-.map-info__row + .map-info__row {
-  margin-top: 4px;
 }
 
 .map-info__label {
   color: var(--gray-medium);
   font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .map-info__value {
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.map-info__value--live {
+  color: var(--status-green);
+}
+
+.map-info__value--historial {
   color: var(--yellow-primary);
-  font-size: 0.75rem;
 }
 
 /* Leaflet dark overrides */
@@ -432,7 +557,7 @@ html, body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — Tablets (≤ 900px)
+   RESPONSIVE — Tablets
    ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
   .dashboard {
@@ -443,11 +568,11 @@ html, body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — Móvil (≤ 768px)
+   RESPONSIVE — Movil
    ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   html, body {
-    overflow: auto;            /* Permitir scroll en móvil */
+    overflow: auto;
     height: auto;
     min-height: 100vh;
   }
@@ -457,7 +582,6 @@ html, body {
     min-height: 100vh;
   }
 
-  /* Header compacto */
   .header {
     height: 50px;
     padding: 0 14px;
@@ -480,7 +604,6 @@ html, body {
     background-size: 10px 10px;
   }
 
-  /* Dashboard: columna única, mapa PRIMERO */
   .dashboard {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
@@ -489,10 +612,9 @@ html, body {
     min-height: auto;
   }
 
-  /* El mapa aparece primero visualmente */
   .map-area {
     order: -1;
-    min-height: 55vh;        /* Ocupa buena parte de la pantalla */
+    min-height: 55vh;
     height: 55vh;
   }
 
@@ -501,13 +623,11 @@ html, body {
     border-radius: 10px;
   }
 
-  /* Sidebar debajo del mapa */
   .sidebar {
     overflow-y: visible;
     gap: 12px;
   }
 
-  /* Cards más compactas */
   .card {
     padding: 14px 16px;
     border-radius: 10px;
@@ -521,7 +641,6 @@ html, body {
     font-size: 0.88rem;
   }
 
-  /* Data grid: una fila con scroll horizontal si es necesario */
   .data-grid {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
@@ -535,13 +654,11 @@ html, body {
     font-size: 0.95rem;
   }
 
-  /* Inputs del historial */
   .input-datetime {
     font-size: 0.78rem;
-    padding: 10px;             /* Más padding para touch */
+    padding: 10px;
   }
 
-  /* Botones lado a lado en móvil */
   .btn-group {
     flex-direction: row;
     gap: 8px;
@@ -549,12 +666,11 @@ html, body {
   }
 
   .btn {
-    padding: 12px 10px;        /* Más alto para touch */
+    padding: 12px 10px;
     font-size: 0.8rem;
     flex: 1;
   }
 
-  /* Map info box: abajo-izquierda para no tapar controles de zoom */
   .map-info {
     top: auto;
     bottom: 8px;
@@ -562,7 +678,7 @@ html, body {
     right: auto;
     padding: 8px 10px;
     font-size: 0.68rem;
-    min-width: 160px;
+    min-width: 100px;
     border-radius: 8px;
   }
 
@@ -574,7 +690,19 @@ html, body {
     font-size: 0.7rem;
   }
 
-  /* Footer */
+  .quick-range__btn {
+    font-size: 0.68rem;
+    padding: 8px 4px;
+  }
+
+  .search-field {
+    flex-direction: column;
+  }
+
+  .btn--search {
+    width: 100%;
+  }
+
   .footer {
     padding: 8px 14px;
     font-size: 0.7rem;
@@ -582,7 +710,7 @@ html, body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — Móvil pequeño (≤ 420px)
+   RESPONSIVE — Movil pequeno
    ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 420px) {
   .header {
@@ -601,7 +729,7 @@ html, body {
   }
 
   .status-text {
-    display: none;             /* Solo el dot en pantallas muy pequeñas */
+    display: none;
   }
 
   .dashboard {
@@ -635,19 +763,18 @@ html, body {
     font-size: 0.88rem;
   }
 
-  /* Botones vuelven a columna en pantallas muy chicas */
   .btn-group {
     flex-direction: column;
   }
 
   .map-info {
-    min-width: 140px;
+    min-width: 100px;
     padding: 6px 8px;
   }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE — Landscape en móvil
+   RESPONSIVE — Landscape en movil
    ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) and (orientation: landscape) {
   .map-area {
