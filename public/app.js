@@ -69,20 +69,17 @@ const taxiIcon = L.divIcon({
 
 function moverMarcador(lat, lon) {
   const latlng = [lat, lon];
-
   if (marcador) {
     marcador.setLatLng(latlng);
   } else {
     marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa);
   }
-
   if (!mapaInicializado) {
     mapa.setView(latlng, 15);
     mapaInicializado = true;
   } else if (!modoHistorial) {
     mapa.panTo(latlng);
   }
-
   if (!modoHistorial) {
     coordenadas.push(latlng);
     if (polilinea) {
@@ -137,7 +134,7 @@ elFechaFin.addEventListener("change", () => {
   limpiarQuickRangeActivo();
 });
 
-// ─── Quick Range helpers ──────────────────────────────────────────────────────
+// ─── Quick Range ──────────────────────────────────────────────────────────────
 function limpiarQuickRangeActivo() {
   btnHoy.classList.remove("quick-range__btn--active");
   btnSemana.classList.remove("quick-range__btn--active");
@@ -153,9 +150,11 @@ function setearRango(inicio, fin, botonActivo) {
   if (botonActivo) botonActivo.classList.add("quick-range__btn--active");
 }
 
+// Quick range buttons auto-consultan historial
 btnHoy.addEventListener("click", () => {
   const ahora = new Date();
   setearRango(inicioDelDia(ahora), finDelDia(ahora), btnHoy);
+  consultarHistorial();
 });
 
 btnSemana.addEventListener("click", () => {
@@ -163,6 +162,7 @@ btnSemana.addEventListener("click", () => {
   const hace7 = new Date(ahora);
   hace7.setDate(hace7.getDate() - 7);
   setearRango(inicioDelDia(hace7), finDelDia(ahora), btnSemana);
+  consultarHistorial();
 });
 
 btnMes.addEventListener("click", () => {
@@ -170,9 +170,10 @@ btnMes.addEventListener("click", () => {
   const hace30 = new Date(ahora);
   hace30.setDate(hace30.getDate() - 30);
   setearRango(inicioDelDia(hace30), finDelDia(ahora), btnMes);
+  consultarHistorial();
 });
 
-// ─── Estado de botones (activo/inactivo) ──────────────────────────────────────
+// ─── Estado de botones ────────────────────────────────────────────────────────
 function actualizarBotones() {
   if (modoHistorial) {
     btnHistorial.classList.add("btn--active");
@@ -181,6 +182,7 @@ function actualizarBotones() {
     btnVivo.classList.remove("btn--active");
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
+    document.getElementById("mapa").classList.add("crosshair-cursor");
   } else {
     btnVivo.classList.add("btn--active");
     btnVivo.classList.remove("btn--inactive");
@@ -188,6 +190,7 @@ function actualizarBotones() {
     btnHistorial.classList.remove("btn--active");
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
+    document.getElementById("mapa").classList.remove("crosshair-cursor");
   }
 }
 
@@ -198,16 +201,14 @@ function actualizarActual(data) {
   const ts = Number(data.timestamp);
   const lat = Number(data.latitude).toFixed(6);
   const lon = Number(data.longitude).toFixed(6);
-
   elLatitud.textContent = lat;
   elLongitud.textContent = lon;
   elFecha.textContent = tsAFecha(ts);
   elHora.textContent = tsAHora(ts);
-
   moverMarcador(Number(data.latitude), Number(data.longitude));
 }
 
-// ─── Cargar ultimo punto desde DB ─────────────────────────────────────────────
+// ─── Cargar ultimo punto ──────────────────────────────────────────────────────
 async function cargarHistorial() {
   try {
     const res = await fetch("/api/history");
@@ -219,7 +220,30 @@ async function cargarHistorial() {
   }
 }
 
-// ─── Consultar recorrido por ventana de tiempo ────────────────────────────────
+// ─── Limpiar polilineas y marcadores de busqueda ──────────────────────────────
+function limpiarCapasBusqueda() {
+  if (marcadorBusqueda) {
+    mapa.removeLayer(marcadorBusqueda);
+    marcadorBusqueda = null;
+  }
+  if (circuloBusqueda) {
+    mapa.removeLayer(circuloBusqueda);
+    circuloBusqueda = null;
+  }
+  if (polilineaBusqueda) {
+    mapa.removeLayer(polilineaBusqueda);
+    polilineaBusqueda = null;
+  }
+}
+
+function limpiarPolilineaHistorial() {
+  if (polilinea) {
+    mapa.removeLayer(polilinea);
+    polilinea = null;
+  }
+}
+
+// ─── Consultar recorrido ──────────────────────────────────────────────────────
 async function consultarHistorial() {
   const inicio = elFechaInicio.value;
   const fin = elFechaFin.value;
@@ -232,38 +256,31 @@ async function consultarHistorial() {
 
   const start = new Date(inicio).getTime();
   const end = new Date(fin).getTime();
-
   if (start >= end) return;
+
+  // Limpiar busqueda previa
+  limpiarCapasBusqueda();
+  resultadoBusqueda.innerHTML = "";
+  inputLugar.value = "";
 
   try {
     const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
     const datos = await res.json();
 
-    if (datos.length === 0) {
-      modoHistorial = true;
-      actualizarBotones();
-      return;
-    }
-
-    if (polilinea) {
-      mapa.removeLayer(polilinea);
-      polilinea = null;
-    }
-
+    limpiarPolilineaHistorial();
     modoHistorial = true;
     actualizarBotones();
 
-    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
+    if (datos.length === 0) return;
 
+    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
     polilinea = L.polyline(puntos, {
       color: "#000000",
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
-
     const ultimo = datos[datos.length - 1];
     actualizarActual(ultimo);
-
     mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
   } catch (err) {
     console.error("[HISTORIAL RANGE] Error:", err);
@@ -275,10 +292,8 @@ function verEnVivo() {
   modoHistorial = false;
   actualizarBotones();
 
-  if (polilinea) {
-    mapa.removeLayer(polilinea);
-    polilinea = null;
-  }
+  limpiarPolilineaHistorial();
+  limpiarCapasBusqueda();
 
   if (coordenadas.length >= 2) {
     polilinea = L.polyline(coordenadas, {
@@ -293,7 +308,8 @@ function verEnVivo() {
   elFechaInicio.max = "";
   elFechaFin.min = "";
   limpiarQuickRangeActivo();
-  limpiarBusqueda();
+  resultadoBusqueda.innerHTML = "";
+  inputLugar.value = "";
 
   if (coordenadas.length > 0) {
     const ultimo = coordenadas[coordenadas.length - 1];
@@ -301,23 +317,139 @@ function verEnVivo() {
   }
 }
 
-// ─── Busqueda por lugar (Nominatim + API /near) ───────────────────────────────
+// ─── Busqueda por lugar ───────────────────────────────────────────────────────
 let marcadorBusqueda = null;
 let circuloBusqueda = null;
+let polilineaBusqueda = null;
 
-function limpiarBusqueda() {
-  if (marcadorBusqueda) {
-    mapa.removeLayer(marcadorBusqueda);
-    marcadorBusqueda = null;
+async function buscarPorCoordenadas(lat, lon, nombreLugar) {
+  const radio = 150;
+
+  // Limpiar polilinea de historial y capas previas de busqueda
+  limpiarPolilineaHistorial();
+  limpiarCapasBusqueda();
+
+  // Dibujar circulo y marcador
+  circuloBusqueda = L.circle([lat, lon], {
+    radius: radio,
+    color: "#F44336",
+    fillColor: "#F44336",
+    fillOpacity: 0.12,
+    weight: 2,
+    dashArray: "6 4",
+  }).addTo(mapa);
+
+  marcadorBusqueda = L.marker([lat, lon]).addTo(mapa);
+  mapa.setView([lat, lon], 16);
+
+  // Consultar API
+  let url = `/api/history/near?lat=${lat}&lon=${lon}&radius=${radio}`;
+  const inicio = elFechaInicio.value;
+  const fin = elFechaFin.value;
+  if (inicio && fin) {
+    url += `&start=${new Date(inicio).getTime()}&end=${new Date(fin).getTime()}`;
   }
-  if (circuloBusqueda) {
-    mapa.removeLayer(circuloBusqueda);
-    circuloBusqueda = null;
+
+  try {
+    const nearRes = await fetch(url);
+    const datos = await nearRes.json();
+
+    let html = `<div class="search-result__lugar">${nombreLugar}</div>`;
+
+    if (datos.length === 0) {
+      html +=
+        '<span class="search-result--empty">El vehiculo no paso por esta zona en el rango seleccionado.</span>';
+      resultadoBusqueda.innerHTML = html;
+      marcadorBusqueda
+        .bindPopup(`<b>${nombreLugar}</b><br>Sin registros en esta zona.`)
+        .openPopup();
+      return;
+    }
+
+    html += `<div class="search-result__count">${datos.length} registro(s) encontrados — haz clic en uno para ver el recorrido</div>`;
+    html += '<div class="search-result__list">';
+    datos.forEach((d, i) => {
+      html += `<div class="search-result__item" data-index="${i}" data-ts="${d.timestamp}">
+        ${tsAFecha(d.timestamp)}  ${tsAHora(d.timestamp)}
+      </div>`;
+    });
+    html += "</div>";
+
+    resultadoBusqueda.innerHTML = html;
+
+    // Popup
+    let popupContent = `<b>${nombreLugar}</b><br><b>${datos.length}</b> paso(s) registrados<br>`;
+    const primeros = datos.slice(0, 3);
+    primeros.forEach((d) => {
+      popupContent += `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}<br>`;
+    });
+    if (datos.length > 3)
+      popupContent += `<i>...clic en la lista para ver recorrido</i>`;
+    marcadorBusqueda.bindPopup(popupContent).openPopup();
+
+    // Click en items de la lista -> graficar ventana de 30 min
+    const items = resultadoBusqueda.querySelectorAll(".search-result__item");
+    items.forEach((item) => {
+      item.addEventListener("click", () => {
+        // Resaltar seleccionado
+        items.forEach((el) =>
+          el.classList.remove("search-result__item--selected"),
+        );
+        item.classList.add("search-result__item--selected");
+
+        const ts = parseInt(item.dataset.ts);
+        graficarVentana(ts);
+      });
+    });
+  } catch (err) {
+    console.error("[BUSQUEDA] Error:", err);
+    resultadoBusqueda.innerHTML =
+      '<span class="search-result--empty">Error al buscar. Verifica tu conexion.</span>';
   }
-  resultadoBusqueda.innerHTML = "";
-  inputLugar.value = "";
 }
 
+// Graficar ventana de 15 min antes y 15 min despues del timestamp seleccionado
+async function graficarVentana(ts) {
+  const VENTANA = 15 * 60 * 1000; // 15 minutos en ms
+  const start = ts - VENTANA;
+  const end = ts + VENTANA;
+
+  // Limpiar polilinea anterior (pero mantener circulo y marcador de busqueda)
+  if (polilineaBusqueda) {
+    mapa.removeLayer(polilineaBusqueda);
+    polilineaBusqueda = null;
+  }
+  limpiarPolilineaHistorial();
+
+  try {
+    const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
+    const datos = await res.json();
+
+    if (datos.length === 0) return;
+
+    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
+    polilineaBusqueda = L.polyline(puntos, {
+      color: "#FFD700",
+      weight: 4,
+      opacity: 0.85,
+      dashArray: "8 4",
+    }).addTo(mapa);
+
+    // Ajustar vista para mostrar recorrido + circulo de busqueda
+    const bounds = polilineaBusqueda.getBounds();
+    if (circuloBusqueda) bounds.extend(circuloBusqueda.getBounds());
+    mapa.fitBounds(bounds, { padding: [50, 50] });
+
+    // Actualizar info lateral con el punto seleccionado
+    const puntoSeleccionado =
+      datos.find((d) => Number(d.timestamp) === ts) || datos[datos.length - 1];
+    actualizarActual(puntoSeleccionado);
+  } catch (err) {
+    console.error("[VENTANA] Error:", err);
+  }
+}
+
+// Buscar por texto (Nominatim)
 async function buscarLugar() {
   const texto = inputLugar.value.trim();
   if (!texto) return;
@@ -325,7 +457,6 @@ async function buscarLugar() {
   resultadoBusqueda.innerHTML =
     '<span class="search-result__loading">Buscando...</span>';
 
-  // 1. Geocodificar con Nominatim (priorizar Barranquilla)
   try {
     const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(texto + ", Barranquilla, Colombia")}&limit=1`;
     const geoRes = await fetch(geoUrl, {
@@ -343,76 +474,26 @@ async function buscarLugar() {
     const lat = parseFloat(lugar.lat);
     const lon = parseFloat(lugar.lon);
     const nombreLugar = lugar.display_name.split(",").slice(0, 3).join(",");
-    const radio = 150; // metros
 
-    // 2. Dibujar en el mapa
-    if (marcadorBusqueda) mapa.removeLayer(marcadorBusqueda);
-    if (circuloBusqueda) mapa.removeLayer(circuloBusqueda);
-
-    circuloBusqueda = L.circle([lat, lon], {
-      radius: radio,
-      color: "#F44336",
-      fillColor: "#F44336",
-      fillOpacity: 0.12,
-      weight: 2,
-      dashArray: "6 4",
-    }).addTo(mapa);
-
-    marcadorBusqueda = L.marker([lat, lon]).addTo(mapa);
-    mapa.setView([lat, lon], 16);
-
-    // 3. Consultar API /near
-    let url = `/api/history/near?lat=${lat}&lon=${lon}&radius=${radio}`;
-
-    const inicio = elFechaInicio.value;
-    const fin = elFechaFin.value;
-    if (inicio && fin) {
-      url += `&start=${new Date(inicio).getTime()}&end=${new Date(fin).getTime()}`;
-    }
-
-    const nearRes = await fetch(url);
-    const datos = await nearRes.json();
-
-    // 4. Mostrar resultados en el sidebar
-    let html = `<div class="search-result__lugar">${nombreLugar}</div>`;
-
-    if (datos.length === 0) {
-      html +=
-        '<span class="search-result--empty">El vehiculo no paso por esta zona en el rango seleccionado.</span>';
-    } else {
-      html += `<strong>${datos.length} registro(s) encontrados:</strong>`;
-      const mostrar = datos.slice(0, 8);
-      mostrar.forEach((d) => {
-        html += `<div class="search-result__item">${tsAFecha(d.timestamp)}  ${tsAHora(d.timestamp)}</div>`;
-      });
-      if (datos.length > 8) {
-        html += `<div class="search-result__more">...y ${datos.length - 8} registros mas</div>`;
-      }
-    }
-
-    resultadoBusqueda.innerHTML = html;
-
-    // 5. Popup en el mapa
-    let popupContent = `<b>${nombreLugar}</b><br>`;
-    if (datos.length === 0) {
-      popupContent += "Sin registros en esta zona.";
-    } else {
-      popupContent += `<b>${datos.length}</b> paso(s) registrados<br>`;
-      const primeros = datos.slice(0, 3);
-      primeros.forEach((d) => {
-        popupContent += `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}<br>`;
-      });
-      if (datos.length > 3) {
-        popupContent += `<i>...y ${datos.length - 3} mas</i>`;
-      }
-    }
-    marcadorBusqueda.bindPopup(popupContent).openPopup();
+    await buscarPorCoordenadas(lat, lon, nombreLugar);
   } catch (err) {
-    console.error("[BUSQUEDA] Error:", err);
+    console.error("[GEOCODE] Error:", err);
     resultadoBusqueda.innerHTML =
       '<span class="search-result--empty">Error al buscar. Verifica tu conexion.</span>';
   }
 }
+
+// Click en mapa en modo historial -> buscar por coordenadas
+mapa.on("click", async (e) => {
+  if (!modoHistorial) return;
+  const { lat, lng } = e.latlng;
+  inputLugar.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  await buscarPorCoordenadas(
+    lat,
+    lng,
+    `Punto: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+  );
+});
 
 // Enter para buscar
 inputLugar.addEventListener("keydown", (e) => {
@@ -435,13 +516,10 @@ async function cargarConfig() {
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function conectarSSE() {
   const source = new EventSource("/api/stream");
-
   source.onopen = () => {
     elEstado.textContent = "Conectado";
     elStatusDot.classList.add("status-dot--connected");
-    console.log("[SSE] Conexion establecida");
   };
-
   source.onmessage = (event) => {
     try {
       if (modoHistorial) return;
@@ -451,11 +529,9 @@ function conectarSSE() {
       console.error("[SSE] Error parseando evento:", e);
     }
   };
-
   source.onerror = () => {
     elEstado.textContent = "Desconectado";
     elStatusDot.classList.remove("status-dot--connected");
-    console.warn("[SSE] Conexion perdida, reintentando en 3s...");
     source.close();
     setTimeout(conectarSSE, 3000);
   };

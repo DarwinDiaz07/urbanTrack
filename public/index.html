@@ -9,7 +9,6 @@
   </head>
   <body>
     <div class="app">
-      <!-- ── Header ────────────────────────────────────────── -->
       <header class="header">
         <div class="header__brand">
           <span class="header__icon">🚕</span>
@@ -22,12 +21,9 @@
       </header>
       <div class="taxi-stripe"></div>
 
-      <!-- ── Dashboard ─────────────────────────────────────── -->
       <main class="dashboard">
-        <!-- Sidebar -->
         <aside class="sidebar">
 
-          <!-- Current Position Card -->
           <section class="card">
             <div class="card__header">
               <h2 class="card__title">📍 Posición Actual</h2>
@@ -56,19 +52,15 @@
             </div>
           </section>
 
-          <!-- History Range Card -->
           <section class="card">
             <div class="card__header">
               <h2 class="card__title">🕐 Consultar Recorrido</h2>
             </div>
-
-            <!-- Quick range buttons -->
             <div class="quick-range">
               <button class="quick-range__btn" id="btn-hoy">Hoy</button>
               <button class="quick-range__btn" id="btn-semana">1 semana</button>
               <button class="quick-range__btn" id="btn-mes">1 mes</button>
             </div>
-
             <div class="range-fields">
               <div class="range-field">
                 <span class="range-field__label">Inicio</span>
@@ -85,13 +77,13 @@
             </div>
           </section>
 
-          <!-- Location Search Card -->
           <section class="card" id="card-busqueda">
             <div class="card__header">
               <h2 class="card__title">🔍 ¿Cuándo pasó por aquí?</h2>
             </div>
+            <p class="search-hint">Busca por dirección o haz clic en el mapa en modo historial</p>
             <div class="search-field">
-              <input type="text" id="input-lugar" class="input-lugar" placeholder="Ej: Centro Comercial Buenavista, Calle 72..." />
+              <input type="text" id="input-lugar" class="input-lugar" placeholder="Ej: CC Buenavista, Calle 72 con 46..." />
               <button id="btn-buscar-lugar" class="btn btn--primary btn--search">Buscar</button>
             </div>
             <div id="resultado-busqueda" class="search-result"></div>
@@ -99,7 +91,6 @@
 
         </aside>
 
-        <!-- Map -->
         <div class="map-area">
           <div class="map-container">
             <div id="mapa"></div>
@@ -113,7 +104,6 @@
         </div>
       </main>
 
-      <!-- ── Footer ────────────────────────────────────────── -->
       <footer class="footer">
         © 2026 <span>urbanTrack GPS</span> — Real-Time Fleet Management
       </footer>
