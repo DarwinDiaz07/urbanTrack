@@ -162,6 +162,8 @@ function actualizarModoUI() {
     btnVivo.classList.add("btn--inactive");
     btnHistorial.classList.add("btn--active");
     btnHistorial.classList.remove("btn--inactive");
+    tabRecorrido.classList.remove("tab-btn--inactive");
+    tabLugar.classList.remove("tab-btn--inactive");
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
   } else {
@@ -169,6 +171,8 @@ function actualizarModoUI() {
     btnVivo.classList.remove("btn--inactive");
     btnHistorial.classList.remove("btn--active");
     btnHistorial.classList.add("btn--inactive");
+    tabRecorrido.classList.add("tab-btn--inactive");
+    tabLugar.classList.add("tab-btn--inactive");
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
     document.getElementById("mapa").classList.remove("crosshair-cursor");
@@ -245,7 +249,10 @@ async function consultarHistorial() {
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
     polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
     actualizarActual(datos[datos.length - 1]);
-    mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40] });
+    setTimeout(() => {
+      mapa.invalidateSize();
+      mapa.fitBounds(polilinea.getBounds(), { padding: [40, 40], maxZoom: 18 });
+    }, 100);
   } catch (err) { console.error("[HISTORIAL] Error:", err); }
 }
 
@@ -363,7 +370,7 @@ async function graficarVentana(ts) {
 
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
     polilineaBusqueda = L.polyline(puntos, {
-      color: "#FFD700", weight: 4, opacity: 0.85, dashArray: "8 4",
+      color: "#000", weight: 4, opacity: 0.85, dashArray: "8 4",
     }).addTo(mapa);
 
     const bounds = polilineaBusqueda.getBounds();

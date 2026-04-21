@@ -250,3 +250,8 @@ html, body {
   .header { height: 42px; }
   .taxi-stripe { height: 3px; }
 }
+
+.tab-btn--inactive {
+  opacity: 0.35;
+  pointer-events: none;
+}
