@@ -160,11 +160,15 @@ function actualizarModoUI() {
   if (modoHistorial) {
     btnVivo.classList.remove("btn--active");
     btnVivo.classList.add("btn--inactive");
+    btnHistorial.classList.add("btn--active");
+    btnHistorial.classList.remove("btn--inactive");
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
   } else {
     btnVivo.classList.add("btn--active");
     btnVivo.classList.remove("btn--inactive");
+    btnHistorial.classList.remove("btn--active");
+    btnHistorial.classList.add("btn--inactive");
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
     document.getElementById("mapa").classList.remove("crosshair-cursor");
