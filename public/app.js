@@ -312,7 +312,7 @@ async function consultarHistorial() {
 }
 
 // ─── Volver a en vivo ─────────────────────────────────────────────────────────
-function verEnVivo() {
+async function verEnVivo() {
   modoHistorial = false;
   actualizarModoUI();
   limpiarPolilineaHistorial();
@@ -325,16 +325,6 @@ function verEnVivo() {
   panelRecorrido.classList.remove("tab-content--hidden");
   panelLugar.classList.add("tab-content--hidden");
 
-  // Resetear coordenadas con el ultimo punto como origen
-  if (marcador) {
-    const pos = marcador.getLatLng();
-    coordenadas = [[pos.lat, pos.lng]];
-    mapa.setView([pos.lat, pos.lng], 15);
-  } else {
-    coordenadas = [];
-  }
-  polilinea = null;
-
   elFechaInicio.value = "";
   elFechaFin.value = "";
   elFechaInicio.max = "";
@@ -342,6 +332,31 @@ function verEnVivo() {
   limpiarQuickRangeActivo();
   resultadoBusqueda.innerHTML = "";
   inputLugar.value = "";
+
+  // Cargar ultimo punto real de la base de datos
+  try {
+    const res = await fetch("/api/history");
+    const datos = await res.json();
+    if (datos.length > 0) {
+      actualizarActual(datos[0]);
+      const lat = Number(datos[0].latitude);
+      const lon = Number(datos[0].longitude);
+      coordenadas = [[lat, lon]];
+      mapa.setView([lat, lon], 15);
+    } else {
+      coordenadas = [];
+    }
+  } catch (err) {
+    console.error("[VIVO] Error cargando ultimo punto:", err);
+    if (marcador) {
+      const pos = marcador.getLatLng();
+      coordenadas = [[pos.lat, pos.lng]];
+      mapa.setView([pos.lat, pos.lng], 15);
+    } else {
+      coordenadas = [];
+    }
+  }
+  polilinea = null;
 }
 // ─── Busqueda por lugar ───────────────────────────────────────────────────────
 async function buscarPorCoordenadas(lat, lon, nombreLugar) {
