@@ -176,21 +176,17 @@ function setearRango(inicio, fin, botonActivo) {
 
 btnHoy.addEventListener("click", () => {
   setearRango(inicioDelDia(new Date()), finDelDia(new Date()), btnHoy);
-  consultarHistorial();
+  btnHistorial.click();
 });
 btnSemana.addEventListener("click", () => {
-  const h = new Date();
-  const a = new Date(h);
-  a.setDate(a.getDate() - 7);
+  const h = new Date(); const a = new Date(h); a.setDate(a.getDate() - 7);
   setearRango(inicioDelDia(a), finDelDia(h), btnSemana);
-  consultarHistorial();
+  btnHistorial.click();
 });
 btnMes.addEventListener("click", () => {
-  const h = new Date();
-  const a = new Date(h);
-  a.setDate(a.getDate() - 30);
+  const h = new Date(); const a = new Date(h); a.setDate(a.getDate() - 30);
   setearRango(inicioDelDia(a), finDelDia(h), btnMes);
-  consultarHistorial();
+  btnHistorial.click();
 });
 
 // ─── UI del modo ──────────────────────────────────────────────────────────────
