@@ -315,7 +315,6 @@ async function consultarHistorial() {
 function verEnVivo() {
   modoHistorial = false;
   actualizarModoUI();
-
   limpiarPolilineaHistorial();
   limpiarCapasBusqueda();
 
@@ -326,14 +325,9 @@ function verEnVivo() {
   panelRecorrido.classList.remove("tab-content--hidden");
   panelLugar.classList.add("tab-content--hidden");
 
-  // Reconstruir polilinea en vivo
-  if (coordenadas.length >= 2) {
-    polilinea = L.polyline(coordenadas, {
-      color: "#000000",
-      weight: 4,
-      opacity: 0.9,
-    }).addTo(mapa);
-  }
+  // Resetear coordenadas — polilinea empieza desde cero
+  coordenadas = [];
+  polilinea = null;
 
   elFechaInicio.value = "";
   elFechaFin.value = "";
@@ -343,11 +337,10 @@ function verEnVivo() {
   resultadoBusqueda.innerHTML = "";
   inputLugar.value = "";
 
-  // Volver al ultimo punto conocido
-  if (coordenadas.length > 0) {
-    const ultimo = coordenadas[coordenadas.length - 1];
-    mapa.setView(ultimo, 15);
-    if (marcador) marcador.setLatLng(ultimo);
+  // Centrar en ultimo punto conocido y continuar desde ahi
+  if (marcador) {
+    const pos = marcador.getLatLng();
+    mapa.setView([pos.lat, pos.lng], 15);
   }
 }
 
