@@ -333,30 +333,32 @@ async function verEnVivo() {
   resultadoBusqueda.innerHTML = "";
   inputLugar.value = "";
 
-  // Cargar ultimo punto real de la base de datos
+  // Limpiar polilinea existente del mapa
+  if (polilinea) { mapa.removeLayer(polilinea); }
+  polilinea = null;
+
+  // Cargar ultimo punto real de la DB como unico origen
   try {
     const res = await fetch("/api/history");
     const datos = await res.json();
     if (datos.length > 0) {
-      actualizarActual(datos[0]);
       const lat = Number(datos[0].latitude);
       const lon = Number(datos[0].longitude);
       coordenadas = [[lat, lon]];
+      if (marcador) { marcador.setLatLng([lat, lon]); }
+      else { marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa); }
       mapa.setView([lat, lon], 15);
+      elLatitud.textContent = lat.toFixed(6);
+      elLongitud.textContent = lon.toFixed(6);
+      elFecha.textContent = tsAFecha(datos[0].timestamp);
+      elHora.textContent = tsAHora(datos[0].timestamp);
     } else {
       coordenadas = [];
     }
   } catch (err) {
-    console.error("[VIVO] Error cargando ultimo punto:", err);
-    if (marcador) {
-      const pos = marcador.getLatLng();
-      coordenadas = [[pos.lat, pos.lng]];
-      mapa.setView([pos.lat, pos.lng], 15);
-    } else {
-      coordenadas = [];
-    }
+    console.error("[VIVO] Error:", err);
+    coordenadas = [];
   }
-  polilinea = null;
 }
 // ─── Busqueda por lugar ───────────────────────────────────────────────────────
 async function buscarPorCoordenadas(lat, lon, nombreLugar) {
