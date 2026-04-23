@@ -129,7 +129,7 @@ app.get("/api/history/near", async (req, res) => {
     params.push(start, end);
   }
 
-  query += ` ORDER BY timestamp ASC`;
+  query += ` ORDER BY timestamp DESC`;
 
   try {
     const result = await pool.query(query, params);
