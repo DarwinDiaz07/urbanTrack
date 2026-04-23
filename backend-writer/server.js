@@ -87,6 +87,41 @@ app.get("/api/history/range", async (req, res) => {
   );
   res.json(result.rows);
 });
+
+// ─── API: Cuando paso el vehiculo cerca de un lugar ───────────────────────────
+app.get("/api/history/near", async (req, res) => {
+  const { lat, lon, radius, start, end } = req.query;
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "lat y lon son requeridos" });
+  }
+  const r = parseFloat(radius) || 100;
+  const delta = r / 111320;
+  const latNum = parseFloat(lat);
+  const lonNum = parseFloat(lon);
+
+  let query = `
+    SELECT timestamp, latitude, longitude
+    FROM gps_positions
+    WHERE latitude BETWEEN $1 AND $2
+      AND longitude BETWEEN $3 AND $4
+  `;
+  const params = [latNum - delta, latNum + delta, lonNum - delta, lonNum + delta];
+
+  if (start && end) {
+    query += ` AND timestamp BETWEEN $5 AND $6`;
+    params.push(start, end);
+  }
+
+  query += ` ORDER BY timestamp DESC`;
+
+  try {
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Servidor UDP ─────────────────────────────────────────────────────────────
 const udpServer = dgram.createSocket("udp4");
 
