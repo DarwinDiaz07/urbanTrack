@@ -104,6 +104,8 @@ const elFechaInicio = document.getElementById("fecha-inicio");
 const elFechaFin = document.getElementById("fecha-fin");
 const btnHistorial = document.getElementById("btn-historial");
 const btnVivo = document.getElementById("btn-vivo");
+const btnModoHistorial = document.getElementById("btn-modo-historial");
+const cardHistorial = document.getElementById("card-historial");
 const btnHoy = document.getElementById("btn-hoy");
 const btnSemana = document.getElementById("btn-semana");
 const btnMes = document.getElementById("btn-mes");
@@ -194,19 +196,25 @@ function actualizarModoUI() {
   if (modoHistorial) {
     btnVivo.classList.remove("btn--active");
     btnVivo.classList.add("btn--inactive");
+    btnModoHistorial.classList.add("btn--active");
+    btnModoHistorial.classList.remove("btn--inactive");
     btnHistorial.classList.add("btn--active");
     btnHistorial.classList.remove("btn--inactive");
     tabRecorrido.classList.remove("tab-btn--inactive");
     tabLugar.classList.remove("tab-btn--inactive");
+    cardHistorial.style.display = "";
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
   } else {
     btnVivo.classList.add("btn--active");
     btnVivo.classList.remove("btn--inactive");
+    btnModoHistorial.classList.remove("btn--active");
+    btnModoHistorial.classList.add("btn--inactive");
     btnHistorial.classList.remove("btn--active");
     btnHistorial.classList.add("btn--inactive");
     tabRecorrido.classList.add("tab-btn--inactive");
     tabLugar.classList.add("tab-btn--inactive");
+    cardHistorial.style.display = "none";
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
     document.getElementById("mapa").classList.remove("crosshair-cursor");
@@ -559,6 +567,10 @@ function conectarSSE() {
 // ─── Eventos ──────────────────────────────────────────────────────────────────
 btnHistorial.addEventListener("click", consultarHistorial);
 btnVivo.addEventListener("click", verEnVivo);
+btnModoHistorial.addEventListener("click", () => {
+  modoHistorial = true;
+  actualizarModoUI();
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 cargarConfig();
