@@ -24,7 +24,7 @@ app.get("/api/config", (req, res) => {
   res.json({ title: process.env.TITLE_NAME });
 });
 
-// ─── SSE: lista de clientes conectados ───────────────────────────────────────
+// ─── SSE ──────────────────────────────────────────────────────────────────────
 const sseClients = [];
 
 app.get("/api/stream", (req, res) => {
@@ -51,14 +51,14 @@ function emitir(data) {
 // ─── API REST ─────────────────────────────────────────────────────────────────
 app.get("/api/latest", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1",
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
   );
   res.json(result.rows[0] || null);
 });
 
 app.get("/api/history", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1",
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
   );
   res.json(result.rows);
 });
@@ -69,26 +69,12 @@ app.get("/api/history/range", async (req, res) => {
     return res.status(400).json({ error: "start y end son requeridos" });
   }
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
     [start, end]
   );
   res.json(result.rows);
 });
 
-// ─── API History Range ────────────────────────────────────────────────────────
-app.get("/api/history/range", async (req, res) => {
-  const { start, end } = req.query;
-  if (!start || !end) {
-    return res.status(400).json({ error: "start y end son requeridos" });
-  }
-  const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
-    [start, end]
-  );
-  res.json(result.rows);
-});
-
-// ─── API: Cuando paso el vehiculo cerca de un lugar ───────────────────────────
 app.get("/api/history/near", async (req, res) => {
   const { lat, lon, radius, start, end } = req.query;
   if (!lat || !lon) {
@@ -100,7 +86,7 @@ app.get("/api/history/near", async (req, res) => {
   const lonNum = parseFloat(lon);
 
   let query = `
-    SELECT timestamp, latitude, longitude
+    SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage
     FROM gps_positions
     WHERE latitude BETWEEN $1 AND $2
       AND longitude BETWEEN $3 AND $4
@@ -130,8 +116,10 @@ udpServer.on("message", async (msg, rinfo) => {
   console.log(`[UDP] Paquete de ${rinfo.address}:${rinfo.port} -> ${raw}`);
 
   const partes = raw.split(",");
-  if (partes.length !== 3) {
-    console.warn("[UDP] Formato invalido, se esperaban 3 campos.");
+
+  // Aceptar 3 campos (legacy) o 7 campos (con OBD-II)
+  if (partes.length !== 3 && partes.length !== 7) {
+    console.warn("[UDP] Formato invalido, se esperaban 3 o 7 campos.");
     return;
   }
 
@@ -144,20 +132,34 @@ udpServer.on("message", async (msg, rinfo) => {
     return;
   }
 
+  let rpm = null;
+  let temperatura = null;
+  let fuelTrim = null;
+  let o2Voltage = null;
+
+  if (partes.length === 7) {
+    rpm = parseInt(partes[3]);
+    temperatura = parseInt(partes[4]);
+    fuelTrim = parseFloat(partes[5]);
+    o2Voltage = parseFloat(partes[6]);
+
+    if (isNaN(rpm)) rpm = null;
+    if (isNaN(temperatura)) temperatura = null;
+    if (isNaN(fuelTrim)) fuelTrim = null;
+    if (isNaN(o2Voltage)) o2Voltage = null;
+  }
+
   await pool.query(
-    "INSERT INTO gps_positions (timestamp, latitude, longitude) VALUES ($1, $2, $3)",
-    [timestamp, latitude, longitude],
+    "INSERT INTO gps_positions (timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    [timestamp, latitude, longitude, rpm, temperatura, fuelTrim, o2Voltage]
   );
 
   console.log(
-    `[DB] Insertado: timestamp=${timestamp} lat=${latitude} lon=${longitude}`,
+    `[DB] Insertado: ts=${timestamp} lat=${latitude} lon=${longitude} rpm=${rpm} temp=${temperatura} fuel=${fuelTrim} o2=${o2Voltage}`
   );
 
-  await pool.query("SELECT pg_notify('gps_update', $1)", [
-    JSON.stringify({ timestamp, latitude, longitude }),
-  ]);
-
-  emitir({ timestamp, latitude, longitude });
+  const data = { timestamp, latitude, longitude, rpm, temperatura, fuel_trim: fuelTrim, o2_voltage: o2Voltage };
+  emitir(data);
 });
 
 udpServer.on("error", (err) => {
@@ -168,8 +170,6 @@ udpServer.on("error", (err) => {
 udpServer.bind(UDP_PORT, () => {
   console.log(`[UDP] Escuchando en puerto ${UDP_PORT}`);
 });
-
-
 
 // ─── Iniciar servidor web ─────────────────────────────────────────────────────
 inicializar()
