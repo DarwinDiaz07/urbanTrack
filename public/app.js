@@ -47,7 +47,6 @@ let polilinea = null;
 let coordenadas = [];
 let modoHistorial = false;
 let mapaInicializado = false;
-let tabActual = "recorrido"; // "recorrido" o "lugar"
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution:
@@ -109,37 +108,9 @@ const cardHistorial = document.getElementById("card-historial");
 const btnHoy = document.getElementById("btn-hoy");
 const btnSemana = document.getElementById("btn-semana");
 const btnMes = document.getElementById("btn-mes");
-const inputLugar = document.getElementById("input-lugar");
-const btnBuscarLugar = document.getElementById("btn-buscar-lugar");
-const resultadoBusqueda = document.getElementById("resultado-busqueda");
-const tabRecorrido = document.getElementById("tab-recorrido");
-const tabLugar = document.getElementById("tab-lugar");
-const panelRecorrido = document.getElementById("panel-recorrido");
-const panelLugar = document.getElementById("panel-lugar");
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-tabRecorrido.addEventListener("click", () => {
-  tabActual = "recorrido";
-  tabRecorrido.classList.add("tab-btn--active");
-  tabLugar.classList.remove("tab-btn--active");
-  panelRecorrido.classList.remove("tab-content--hidden");
-  panelLugar.classList.add("tab-content--hidden");
-  document.getElementById("mapa").classList.remove("crosshair-cursor");
-});
-
-tabLugar.addEventListener("click", () => {
-  tabActual = "lugar";
-  tabLugar.classList.add("tab-btn--active");
-  tabRecorrido.classList.remove("tab-btn--active");
-  panelLugar.classList.remove("tab-content--hidden");
-  panelRecorrido.classList.add("tab-content--hidden");
-  // Activar modo historial para permitir click en mapa
-  if (!modoHistorial) {
-    modoHistorial = true;
-    actualizarModoUI();
-  }
-  document.getElementById("mapa").classList.add("crosshair-cursor");
-});
+const sliderContainer = document.getElementById("slider-container");
+const sliderRecorrido = document.getElementById("slider-recorrido");
+const sliderInfo = document.getElementById("slider-info");
 
 // ─── Validacion fechas ────────────────────────────────────────────────────────
 elFechaInicio.addEventListener("change", () => {
@@ -200,8 +171,6 @@ function actualizarModoUI() {
     btnModoHistorial.classList.remove("btn--inactive");
     btnHistorial.classList.add("btn--active");
     btnHistorial.classList.remove("btn--inactive");
-    tabRecorrido.classList.remove("tab-btn--inactive");
-    tabLugar.classList.remove("tab-btn--inactive");
     cardHistorial.style.display = "";
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
@@ -212,12 +181,9 @@ function actualizarModoUI() {
     btnModoHistorial.classList.add("btn--inactive");
     btnHistorial.classList.remove("btn--active");
     btnHistorial.classList.add("btn--inactive");
-    tabRecorrido.classList.add("tab-btn--inactive");
-    tabLugar.classList.add("tab-btn--inactive");
     cardHistorial.style.display = "none";
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
-    document.getElementById("mapa").classList.remove("crosshair-cursor");
   }
 }
 
@@ -247,31 +213,62 @@ async function cargarHistorial() {
 }
 
 // ─── Limpiar capas ────────────────────────────────────────────────────────────
-let marcadorBusqueda = null;
-let circuloBusqueda = null;
-let polilineaBusqueda = null;
-
-function limpiarCapasBusqueda() {
-  if (marcadorBusqueda) {
-    mapa.removeLayer(marcadorBusqueda);
-    marcadorBusqueda = null;
-  }
-  if (circuloBusqueda) {
-    mapa.removeLayer(circuloBusqueda);
-    circuloBusqueda = null;
-  }
-  if (polilineaBusqueda) {
-    mapa.removeLayer(polilineaBusqueda);
-    polilineaBusqueda = null;
-  }
-}
-
 function limpiarPolilineaHistorial() {
   if (polilinea) {
     mapa.removeLayer(polilinea);
     polilinea = null;
   }
 }
+
+// ─── Slider de recorrido ──────────────────────────────────────────────────────
+let datosHistorial = [];
+
+function actualizarTrackSlider() {
+  const pct = sliderRecorrido.max > 0
+    ? (sliderRecorrido.value / sliderRecorrido.max) * 100
+    : 0;
+  sliderRecorrido.style.background =
+    `linear-gradient(to right, var(--yellow-primary) ${pct}%, var(--gray-dark) ${pct}%)`;
+}
+
+function actualizarSlider(idx) {
+  const d = datosHistorial[idx];
+  const lat = Number(d.latitude);
+  const lon = Number(d.longitude);
+  const latlng = [lat, lon];
+
+  if (marcador) {
+    marcador.setLatLng(latlng);
+  } else {
+    marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa);
+  }
+
+  const fechaStr = `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}`;
+  const tooltipHTML = `<b>${fechaStr}</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+
+  if (marcador.getTooltip()) {
+    marcador.setTooltipContent(tooltipHTML);
+  } else {
+    marcador.bindTooltip(tooltipHTML, {
+      permanent: true,
+      direction: "top",
+      className: "slider-tooltip",
+      offset: [0, -4],
+    }).openTooltip();
+  }
+
+  sliderInfo.textContent = `${idx + 1} / ${datosHistorial.length}  ·  ${fechaStr}`;
+  elLatitud.textContent = lat.toFixed(6);
+  elLongitud.textContent = lon.toFixed(6);
+  elFecha.textContent = tsAFecha(d.timestamp);
+  elHora.textContent = tsAHora(d.timestamp);
+  actualizarTrackSlider();
+}
+
+sliderRecorrido.addEventListener("input", (e) => {
+  if (datosHistorial.length === 0) return;
+  actualizarSlider(parseInt(e.target.value));
+});
 
 // ─── Consultar recorrido por fecha ────────────────────────────────────────────
 async function consultarHistorial() {
@@ -288,9 +285,8 @@ async function consultarHistorial() {
   const end = new Date(fin).getTime();
   if (start >= end) return;
 
-  limpiarCapasBusqueda();
-  resultadoBusqueda.innerHTML = "";
-  inputLugar.value = "";
+  sliderContainer.style.display = "none";
+  datosHistorial = [];
 
   try {
     const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
@@ -308,12 +304,19 @@ async function consultarHistorial() {
       weight: 4,
       opacity: 0.9,
     }).addTo(mapa);
-    actualizarActual(datos[datos.length - 1]);
+
     mapa.flyToBounds(polilinea.getBounds(), {
       padding: [40, 40],
       maxZoom: 18,
       duration: 0.5,
     });
+
+    datosHistorial = datos;
+    sliderRecorrido.min = 0;
+    sliderRecorrido.max = datos.length - 1;
+    sliderRecorrido.value = 0;
+    sliderContainer.style.display = "";
+    actualizarSlider(0);
   } catch (err) {
     console.error("[HISTORIAL] Error:", err);
   }
@@ -324,28 +327,20 @@ async function verEnVivo() {
   modoHistorial = false;
   actualizarModoUI();
   limpiarPolilineaHistorial();
-  limpiarCapasBusqueda();
 
-  // Restaurar tab a recorrido
-  tabActual = "recorrido";
-  tabRecorrido.classList.add("tab-btn--active");
-  tabLugar.classList.remove("tab-btn--active");
-  panelRecorrido.classList.remove("tab-content--hidden");
-  panelLugar.classList.add("tab-content--hidden");
+  sliderContainer.style.display = "none";
+  datosHistorial = [];
+
+  if (marcador && marcador.getTooltip()) {
+    marcador.unbindTooltip();
+  }
 
   elFechaInicio.value = "";
   elFechaFin.value = "";
   elFechaInicio.max = "";
   elFechaFin.min = "";
   limpiarQuickRangeActivo();
-  resultadoBusqueda.innerHTML = "";
-  inputLugar.value = "";
 
-  // Limpiar polilinea existente del mapa
-  if (polilinea) { mapa.removeLayer(polilinea); }
-  polilinea = null;
-
-  // Cargar ultimo punto real de la DB como unico origen
   try {
     const res = await fetch("/api/history");
     const datos = await res.json();
@@ -368,167 +363,6 @@ async function verEnVivo() {
     coordenadas = [];
   }
 }
-// ─── Busqueda por lugar ───────────────────────────────────────────────────────
-async function buscarPorCoordenadas(lat, lon, nombreLugar) {
-  const radio = 150;
-
-  limpiarPolilineaHistorial();
-  limpiarCapasBusqueda();
-
-  circuloBusqueda = L.circle([lat, lon], {
-    radius: radio,
-    color: "#F44336",
-    fillColor: "#F44336",
-    fillOpacity: 0.12,
-    weight: 2,
-    dashArray: "6 4",
-  }).addTo(mapa);
-
-  marcadorBusqueda = L.marker([lat, lon]).addTo(mapa);
-  mapa.setView([lat, lon], 16);
-
-  // SIN filtro de fecha — busca todos los registros
-  const url = `/api/history/near?lat=${lat}&lon=${lon}&radius=${radio}`;
-
-  try {
-    const nearRes = await fetch(url);
-    const datos = await nearRes.json();
-
-    let html = `<div class="search-result__lugar">${nombreLugar}</div>`;
-
-    if (datos.length === 0) {
-      html +=
-        '<span class="search-result--empty">El vehiculo nunca paso por esta zona.</span>';
-      resultadoBusqueda.innerHTML = html;
-      marcadorBusqueda
-        .bindPopup(`<b>${nombreLugar}</b><br>Sin registros.`)
-        .openPopup();
-      return;
-    }
-
-    html += `<div class="search-result__count">${datos.length} registro(s) — selecciona uno para ver el recorrido</div>`;
-    html += '<div class="search-result__list">';
-    datos.forEach((d, i) => {
-      html += `<div class="search-result__item" data-index="${i}" data-ts="${d.timestamp}">
-        ${tsAFecha(d.timestamp)}  ${tsAHora(d.timestamp)}
-      </div>`;
-    });
-    html += "</div>";
-
-    resultadoBusqueda.innerHTML = html;
-
-    // Popup
-    let popup = `<b>${nombreLugar}</b><br><b>${datos.length}</b> paso(s)<br>`;
-    datos.slice(0, 3).forEach((d) => {
-      popup += `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}<br>`;
-    });
-    if (datos.length > 3) popup += `<i>Selecciona en la lista</i>`;
-    marcadorBusqueda.bindPopup(popup).openPopup();
-
-    // Click en cada item -> graficar ventana 30 min
-    const items = resultadoBusqueda.querySelectorAll(".search-result__item");
-    items.forEach((item) => {
-      item.addEventListener("click", () => {
-        items.forEach((el) =>
-          el.classList.remove("search-result__item--selected"),
-        );
-        item.classList.add("search-result__item--selected");
-        graficarVentana(parseInt(item.dataset.ts));
-      });
-    });
-  } catch (err) {
-    console.error("[BUSQUEDA] Error:", err);
-    resultadoBusqueda.innerHTML =
-      '<span class="search-result--empty">Error al buscar.</span>';
-  }
-}
-
-async function graficarVentana(ts) {
-  const VENTANA = 15 * 60 * 1000;
-  const start = ts - VENTANA;
-  const end = ts + VENTANA;
-
-  if (polilineaBusqueda) {
-    mapa.removeLayer(polilineaBusqueda);
-    polilineaBusqueda = null;
-  }
-  limpiarPolilineaHistorial();
-
-  try {
-    const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
-    const datos = await res.json();
-    if (datos.length === 0) return;
-
-    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
-    polilineaBusqueda = L.polyline(puntos, {
-      color: "#000",
-      weight: 4,
-      opacity: 0.85,
-      dashArray: "8 4",
-    }).addTo(mapa);
-
-    const bounds = polilineaBusqueda.getBounds();
-    if (circuloBusqueda) bounds.extend(circuloBusqueda.getBounds());
-    mapa.fitBounds(bounds, { padding: [50, 50] });
-
-    const punto =
-      datos.find((d) => Number(d.timestamp) === ts) || datos[datos.length - 1];
-    actualizarActual(punto);
-  } catch (err) {
-    console.error("[VENTANA] Error:", err);
-  }
-}
-
-async function buscarLugar() {
-  const texto = inputLugar.value.trim();
-  if (!texto) return;
-
-  resultadoBusqueda.innerHTML =
-    '<span class="search-result__loading">Buscando...</span>';
-
-  try {
-    const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(texto + ", Barranquilla, Colombia")}&limit=1`;
-    const geoRes = await fetch(geoUrl, {
-      headers: { "Accept-Language": "es" },
-    });
-    const geoData = await geoRes.json();
-
-    if (geoData.length === 0) {
-      resultadoBusqueda.innerHTML =
-        '<span class="search-result--empty">No se encontro el lugar.</span>';
-      return;
-    }
-
-    const lugar = geoData[0];
-    const nombreLugar = lugar.display_name.split(",").slice(0, 3).join(",");
-    await buscarPorCoordenadas(
-      parseFloat(lugar.lat),
-      parseFloat(lugar.lon),
-      nombreLugar,
-    );
-  } catch (err) {
-    console.error("[GEOCODE] Error:", err);
-    resultadoBusqueda.innerHTML =
-      '<span class="search-result--empty">Error al buscar.</span>';
-  }
-}
-
-// Click en mapa -> buscar (solo en tab lugar)
-mapa.on("click", async (e) => {
-  if (tabActual !== "lugar") return;
-  const { lat, lng } = e.latlng;
-  inputLugar.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  await buscarPorCoordenadas(
-    lat,
-    lng,
-    `Punto: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-  );
-});
-
-inputLugar.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") buscarLugar();
-});
-btnBuscarLugar.addEventListener("click", buscarLugar);
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 async function cargarConfig() {
