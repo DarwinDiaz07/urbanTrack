@@ -52,7 +52,12 @@
             </div>
           </section>
 
-          <section class="card">
+          <section class="mode-switch">
+            <button id="btn-vivo" class="btn mode-switch__btn btn--active">Ver en vivo</button>
+            <button id="btn-modo-historial" class="btn mode-switch__btn btn--inactive">Ver historial</button>
+          </section>
+
+          <section class="card" id="card-historial" style="display:none">
             <div class="card__header">
               <h2 class="card__title">🕐 Historial</h2>
             </div>
@@ -93,11 +98,6 @@
                 <button id="btn-buscar-lugar" class="btn btn--primary btn--search">Buscar</button>
               </div>
               <div id="resultado-busqueda" class="search-result"></div>
-            </div>
-
-            <!-- Boton volver a vivo (siempre visible) -->
-            <div class="btn-vivo-wrap">
-              <button id="btn-vivo" class="btn btn--secondary btn--active">Ver en vivo</button>
             </div>
           </section>
 
