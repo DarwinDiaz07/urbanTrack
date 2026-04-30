@@ -22,7 +22,7 @@ app.get("/api/config", (req, res) => {
   res.json({ title: process.env.TITLE_NAME });
 });
 
-// ─── SSE: lista de clientes conectados ───────────────────────────────────────
+// ─── SSE ──────────────────────────────────────────────────────────────────────
 const sseClients = [];
 
 app.get("/api/stream", (req, res) => {
@@ -52,13 +52,13 @@ let ultimoId = 0;
 async function polling() {
   try {
     const result = await pool.query(
-      "SELECT id, timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1"
+      "SELECT id, timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
     );
     if (result.rows.length === 0) return;
     const row = result.rows[0];
     if (row.id > ultimoId) {
       ultimoId = row.id;
-      console.log(`[POLL] Nuevo dato id=${row.id} lat=${row.latitude} lon=${row.longitude}`);
+      console.log(`[POLL] Nuevo dato id=${row.id} lat=${row.latitude} lon=${row.longitude} rpm=${row.rpm}`);
       emitir(row);
     }
   } catch (err) {
@@ -69,14 +69,14 @@ async function polling() {
 // ─── API REST ─────────────────────────────────────────────────────────────────
 app.get("/api/latest", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1"
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
   );
   res.json(result.rows[0] || null);
 });
 
 app.get("/api/history", async (req, res) => {
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions ORDER BY id DESC LIMIT 1"
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
   );
   res.json(result.rows);
 });
@@ -87,25 +87,12 @@ app.get("/api/history/range", async (req, res) => {
     return res.status(400).json({ error: "start y end son requeridos" });
   }
   const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
-    [start, end]
-  );
-  res.json(result.rows);
-});
-// ─── API History Range ────────────────────────────────────────────────────────
-app.get("/api/history/range", async (req, res) => {
-  const { start, end } = req.query;
-  if (!start || !end) {
-    return res.status(400).json({ error: "start y end son requeridos" });
-  }
-  const result = await pool.query(
-    "SELECT timestamp, latitude, longitude FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
+    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
     [start, end]
   );
   res.json(result.rows);
 });
 
-// ─── API: Cuando paso el vehiculo cerca de un lugar ───────────────────────────
 app.get("/api/history/near", async (req, res) => {
   const { lat, lon, radius, start, end } = req.query;
   if (!lat || !lon) {
@@ -117,7 +104,7 @@ app.get("/api/history/near", async (req, res) => {
   const lonNum = parseFloat(lon);
 
   let query = `
-    SELECT timestamp, latitude, longitude
+    SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage
     FROM gps_positions
     WHERE latitude BETWEEN $1 AND $2
       AND longitude BETWEEN $3 AND $4
@@ -142,7 +129,6 @@ app.get("/api/history/near", async (req, res) => {
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────
 conectar()
   .then(() => {
-    // Inicializar ultimoId con el último registro actual
     pool.query("SELECT id FROM gps_positions ORDER BY id DESC LIMIT 1")
       .then((r) => {
         if (r.rows.length > 0) {
@@ -151,7 +137,6 @@ conectar()
         }
       });
 
-    // Arrancar polling cada 2 segundos
     setInterval(polling, 2000);
     console.log("[POLL] Polling iniciado cada 2 segundos");
 
