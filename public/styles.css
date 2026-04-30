@@ -118,8 +118,6 @@ html, body {
 
 .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 
-.btn-vivo-wrap { margin-top: 14px; border-top: 1px solid var(--gray-dark); padding-top: 14px; }
-
 .btn {
   width: 100%; padding: 10px 12px; border: none; border-radius: 8px;
   font-family: var(--font-main); font-size: 0.82rem; font-weight: 600;
@@ -133,6 +131,22 @@ html, body {
 .btn--secondary:hover { background: var(--gray-medium); }
 .btn--active { opacity: 1; }
 .btn--inactive { opacity: 0.35; }
+
+/* ── Mode Switch ───────────────────────────────────────────────────────── */
+.mode-switch { display: flex; gap: 8px; }
+.mode-switch__btn {
+  flex: 1;
+  background: var(--gray-dark);
+  color: var(--text-light);
+  border: 1px solid var(--gray-medium);
+}
+.mode-switch__btn.btn--active {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+  border-color: var(--yellow-primary);
+  opacity: 1;
+}
+.mode-switch__btn.btn--inactive { opacity: 0.45; }
 
 /* ── Search ────────────────────────────────────────────────────────────── */
 .search-hint { font-size: 0.7rem; color: var(--gray-medium); margin-bottom: 10px; line-height: 1.4; }
