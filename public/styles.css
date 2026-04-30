@@ -344,3 +344,46 @@ html, body {
 .leaflet-tooltip.slider-tooltip::before {
   border-top-color: var(--yellow-primary);
 }
+
+/* ── OBD Live Card ─────────────────────────────────────────────────────── */
+#card-obd-live .data-item__value {
+  font-size: 1rem;
+}
+
+/* ── Charts Panel ──────────────────────────────────────────────────────── */
+.charts-panel {
+  flex: 1;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-dark);
+  background: var(--black-secondary);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.charts-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.chart-box {
+  background: var(--black-primary);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid var(--gray-dark);
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
