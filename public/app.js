@@ -396,6 +396,8 @@ function crearGrafica(canvasId, label, datos, color, unit) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
+      parsing: false,
       plugins: {
         legend: { labels: { color: "#F5F5F5", font: { size: 11 } } },
         tooltip: {
@@ -408,7 +410,7 @@ function crearGrafica(canvasId, label, datos, color, unit) {
       },
       scales: {
         x: {
-          ticks: { color: "#6B6B6B", maxTicksLimit: 8, font: { size: 9 } },
+          ticks: { color: "#6B6B6B", autoSkip: true, maxTicksLimit: 10, font: { size: 9 } },
           grid: { color: "#3A3A3A" },
         },
         y: {
@@ -470,14 +472,16 @@ function mostrarGraficas() {
   const fuelData = datosHistorial.filter((d) => d.fuel_trim != null).map((d) => ({ timestamp: d.timestamp, value: d.fuel_trim }));
   const o2Data = datosHistorial.filter((d) => d.o2_voltage != null).map((d) => ({ timestamp: d.timestamp, value: d.o2_voltage }));
 
-  chartRpm = crearGrafica("chart-rpm", "RPM", rpmData, "#FFD700", "RPM");
-  chartTemp = crearGrafica("chart-temp", "Temperatura", tempData, "#F44336", "°C");
-  chartFuel = crearGrafica("chart-fuel", "Fuel Trim", fuelData, "#4CAF50", "%");
-  chartO2 = crearGrafica("chart-o2", "O₂ Voltaje", o2Data, "#2196F3", "V");
-
   mapContainer.style.display = "none";
   chartsPanel.style.display = "";
-  actualizarLineaVertical(parseInt(sliderRecorrido.value));
+
+  requestAnimationFrame(() => {
+    chartRpm = crearGrafica("chart-rpm", "RPM", rpmData, "#FFD700", "RPM");
+    chartTemp = crearGrafica("chart-temp", "Temperatura", tempData, "#F44336", "°C");
+    chartFuel = crearGrafica("chart-fuel", "Fuel Trim", fuelData, "#4CAF50", "%");
+    chartO2 = crearGrafica("chart-o2", "O₂ Voltaje", o2Data, "#2196F3", "V");
+    actualizarLineaVertical(parseInt(sliderRecorrido.value));
+  });
 }
 
 btnVerGraficas.addEventListener("click", mostrarGraficas);
