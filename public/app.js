@@ -247,22 +247,42 @@ sliderRecorrido.addEventListener("input", (e) => {
   actualizarSlider(parseInt(e.target.value));
 });
 
-// ─── Consultar recorrido ──────────────────────────────────────────────────────
-async function consultarHistorial() {
+// ─── Botones de acción historial (activo/inactivo) ────────────────────────────
+function actualizarBotonesAccion(activo) {
+  if (activo === "recorrido") {
+    btnHistorial.classList.add("btn--active");
+    btnHistorial.classList.remove("btn--inactive");
+    btnVerGraficas.classList.remove("btn--active");
+    btnVerGraficas.classList.add("btn--inactive");
+  } else if (activo === "graficas") {
+    btnVerGraficas.classList.add("btn--active");
+    btnVerGraficas.classList.remove("btn--inactive");
+    btnHistorial.classList.remove("btn--active");
+    btnHistorial.classList.add("btn--inactive");
+  } else {
+    btnHistorial.classList.remove("btn--active", "btn--inactive");
+    btnVerGraficas.classList.remove("btn--active", "btn--inactive");
+  }
+}
+
+async function consultarDatosRango() {
   let inicio = elFechaInicio.value;
   let fin = elFechaFin.value;
-
   if (!inicio || !fin) {
     setearRango(inicioDelDia(new Date()), finDelDia(new Date()), btnHoy);
     inicio = elFechaInicio.value;
     fin = elFechaFin.value;
   }
-
   const start = new Date(inicio).getTime();
   const end = new Date(fin).getTime();
-  if (start >= end) return;
+  if (start >= end) return null;
+  const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
+  return await res.json();
+}
 
-  const graficasAbiertas = chartsPanel.style.display !== "none";
+// ─── Consultar recorrido ──────────────────────────────────────────────────────
+async function consultarHistorial() {
+  actualizarBotonesAccion("recorrido");
   sliderContainer.style.display = "none";
   obdSnapshot.style.display = "none";
   datosHistorial = [];
@@ -270,8 +290,8 @@ async function consultarHistorial() {
   mapContainer.style.display = "";
 
   try {
-    const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
-    const datos = await res.json();
+    const datos = await consultarDatosRango();
+    if (!datos) return;
 
     limpiarPolilineaHistorial();
     modoHistorial = true;
@@ -289,14 +309,48 @@ async function consultarHistorial() {
     sliderRecorrido.value = 0;
     sliderContainer.style.display = "";
     actualizarSlider(0);
-    if (graficasAbiertas) mostrarGraficas();
   } catch (err) { console.error("[HISTORIAL] Error:", err); }
+}
+
+// ─── Consultar telemetría histórica ──────────────────────────────────────────
+async function consultarTelemetriaHistorica() {
+  actualizarBotonesAccion("graficas");
+  sliderContainer.style.display = "none";
+  obdSnapshot.style.display = "none";
+  datosHistorial = [];
+  destruirGraficas();
+  chartsPanel.style.display = "none";
+  mapContainer.style.display = "";
+
+  try {
+    const datos = await consultarDatosRango();
+    if (!datos) return;
+
+    limpiarPolilineaHistorial();
+    modoHistorial = true;
+    actualizarModoUI();
+
+    if (datos.length === 0) return;
+
+    const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
+    polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+
+    datosHistorial = datos;
+    sliderRecorrido.min = 0;
+    sliderRecorrido.max = datos.length - 1;
+    sliderRecorrido.value = 0;
+    sliderContainer.style.display = "";
+    actualizarSlider(0);
+
+    mostrarGraficas();
+  } catch (err) { console.error("[TELEMETRIA] Error:", err); }
 }
 
 // ─── Volver a en vivo ─────────────────────────────────────────────────────────
 async function verEnVivo() {
   modoHistorial = false;
   actualizarModoUI();
+  actualizarBotonesAccion(null);
   limpiarPolilineaHistorial();
 
   sliderContainer.style.display = "none";
@@ -548,10 +602,11 @@ function mostrarGraficas() {
   }, 100);
 }
 
-btnVerGraficas.addEventListener("click", mostrarGraficas);
+btnVerGraficas.addEventListener("click", consultarTelemetriaHistorica);
 btnCerrarGraficas.addEventListener("click", () => {
   chartsPanel.style.display = "none";
   mapContainer.style.display = "";
+  actualizarBotonesAccion("recorrido");
   mapa.invalidateSize();
 });
 

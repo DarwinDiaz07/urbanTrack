@@ -357,6 +357,16 @@ html, body {
   border: 1px solid var(--gray-dark);
 }
 
+.obd-snapshot__title {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--yellow-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
 .obd-snapshot__item {
   display: flex;
   flex-direction: column;
@@ -377,6 +387,21 @@ html, body {
   color: var(--yellow-primary);
   font-family: var(--font-mono);
 }
+
+/* ── Action Buttons (Ver recorrido / Ver telemetría histórica) ─────────── */
+.btn--action {
+  background: var(--gray-dark);
+  color: var(--text-light);
+  border: 1px solid var(--gray-medium);
+}
+.btn--action:hover { background: var(--gray-medium); }
+.btn--action.btn--active {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+  border-color: var(--yellow-primary);
+  opacity: 1;
+}
+.btn--action.btn--inactive { opacity: 0.45; }
 
 /* ── OBD Live Card ─────────────────────────────────────────────────────── */
 #card-obd-live .data-item__value {
