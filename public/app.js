@@ -1,16 +1,12 @@
 const ZONA = "America/Bogota";
 
-function tsAFecha(ts) {
-  return new Date(Number(ts))
-    .toLocaleDateString("es-CO", { timeZone: ZONA, year: "numeric", month: "2-digit", day: "2-digit" })
-    .split("/").reverse().join("-");
-}
+const _fmtFecha = new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, year: "numeric", month: "2-digit", day: "2-digit" });
+const _fmtHora  = new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+const _fmtTick  = new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 
-function tsAHora(ts) {
-  return new Date(Number(ts)).toLocaleTimeString("es-CO", {
-    timeZone: ZONA, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-  });
-}
+function tsAFecha(ts) { return _fmtFecha.format(Number(ts)).split("/").reverse().join("-"); }
+function tsAHora(ts)  { return _fmtHora.format(Number(ts)); }
+function fmtTooltipTitle(ts) { return `${tsAFecha(ts)} ${tsAHora(ts)}`; }
 
 function toLocalDatetimeString(date) {
   const offset = date.getTimezoneOffset();
@@ -369,54 +365,95 @@ let chartTemp = null;
 let chartFuel = null;
 let chartO2 = null;
 
+// LTTB downsampling — preserves visual shape while reducing point count
+function lttb(data, threshold) {
+  const n = data.length;
+  if (n <= threshold) return data;
+  const result = [data[0]];
+  const step = (n - 2) / (threshold - 2);
+  let a = 0;
+  for (let i = 1; i < threshold - 1; i++) {
+    const nb0 = Math.floor((i + 1) * step) + 1;
+    const nb1 = Math.min(Math.floor((i + 2) * step) + 1, n);
+    let avgX = 0, avgY = 0;
+    for (let j = nb0; j < nb1; j++) { avgX += data[j].x; avgY += data[j].y; }
+    const cnt = nb1 - nb0 || 1;
+    avgX /= cnt; avgY /= cnt;
+    const b0 = Math.floor(i * step) + 1, b1 = nb0;
+    let maxArea = -1, pick = b0;
+    const ax = data[a].x, ay = data[a].y;
+    for (let j = b0; j < b1; j++) {
+      const area = Math.abs((ax - avgX) * (data[j].y - ay) - (ax - data[j].x) * (avgY - ay));
+      if (area > maxArea) { maxArea = area; pick = j; }
+    }
+    result.push(data[pick]);
+    a = pick;
+  }
+  result.push(data[n - 1]);
+  return result;
+}
+
+const LTTB_THRESHOLD = 2000;
+
 function crearGrafica(canvasId, label, datos, color, unit) {
   const canvas = document.getElementById(canvasId);
   canvas.style.width = "100%";
   canvas.style.height = "100%";
   const ctx = canvas.getContext("2d");
-  const labels = datos.map((d) => `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}`);
-  const values = datos.map((d) => Number(d.value));
-  const timestamps = datos.map((d) => Number(d.timestamp));
 
-  const rawMin = values.length ? Math.min(...values) : 0;
-  const rawMax = values.length ? Math.max(...values) : 1;
+  // {x: timestamp_ms, y: value} — no string labels generated
+  const points = datos.map((d) => ({ x: Number(d.timestamp), y: Number(d.value) }));
+  const plotPoints = lttb(points, LTTB_THRESHOLD);
+
+  let rawMin = Infinity, rawMax = -Infinity;
+  for (const p of plotPoints) { if (p.y < rawMin) rawMin = p.y; if (p.y > rawMax) rawMax = p.y; }
+  if (!isFinite(rawMin)) { rawMin = 0; rawMax = 1; }
   const pad = (rawMax - rawMin) * 0.1 || 1;
 
   const chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels,
       datasets: [{
         label,
-        data: values,
+        data: plotPoints,
         borderColor: color,
         backgroundColor: color + "22",
         borderWidth: 2,
-        pointRadius: new Array(values.length).fill(0),
+        // scriptable: O(1) update — only reads chart._activeIdx, no array rebuild
+        pointRadius: (c) => c.dataIndex === c.chart._activeIdx ? 5 : 0,
         pointBackgroundColor: color,
         pointBorderColor: "#1A1A1A",
         pointBorderWidth: 2,
         fill: true,
         tension: 0.3,
+        parsing: false,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
+      parsing: false,
       plugins: {
         legend: { labels: { color: "#F5F5F5", font: { size: 11 } } },
         tooltip: {
           callbacks: {
-            label: (c) => `${c.parsed.y} ${unit}`,
-            title: (items) => items[0]?.label ?? "",
+            label: (c) => `${c.raw.y} ${unit}`,
+            title: (items) => fmtTooltipTitle(items[0].raw.x),
           },
         },
         verticalLine: { index: null },
       },
       scales: {
         x: {
-          ticks: { color: "#6B6B6B", autoSkip: true, maxTicksLimit: 10, font: { size: 9 } },
+          type: "linear",
+          ticks: {
+            color: "#6B6B6B",
+            autoSkip: true,
+            maxTicksLimit: 10,
+            font: { size: 9 },
+            callback: (val) => _fmtTick.format(val),
+          },
           grid: { color: "#3A3A3A" },
         },
         y: {
@@ -429,7 +466,7 @@ function crearGrafica(canvasId, label, datos, color, unit) {
     },
   });
 
-  chart._chartTimestamps = timestamps;
+  chart._activeIdx = null;
   return chart;
 }
 
@@ -440,22 +477,24 @@ function destruirGraficas() {
   if (chartO2) { chartO2.destroy(); chartO2 = null; }
 }
 
-function indiceMasCercano(timestamps, ts) {
-  let closest = 0;
-  let minDiff = Infinity;
-  for (let i = 0; i < timestamps.length; i++) {
-    const diff = Math.abs(timestamps[i] - ts);
-    if (diff < minDiff) { minDiff = diff; closest = i; }
+// O(log n) binary search on sorted {x, y} points
+function binarySearchClosest(points, ts) {
+  let lo = 0, hi = points.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid].x < ts) lo = mid + 1;
+    else hi = mid;
   }
-  return closest;
+  if (lo > 0 && Math.abs(points[lo - 1].x - ts) < Math.abs(points[lo].x - ts)) return lo - 1;
+  return lo;
 }
 
 function actualizarLineaVertical(sliderIdx) {
   const ts = Number(datosHistorial[sliderIdx].timestamp);
   [chartRpm, chartTemp, chartFuel, chartO2].forEach((chart) => {
     if (!chart) return;
-    const idx = indiceMasCercano(chart._chartTimestamps, ts);
-    chart.data.datasets[0].pointRadius = chart.data.datasets[0].data.map((_, i) => i === idx ? 5 : 0);
+    const idx = binarySearchClosest(chart.data.datasets[0].data, ts);
+    chart._activeIdx = idx;
     chart.options.plugins.verticalLine.index = idx;
     chart.update("none");
   });
