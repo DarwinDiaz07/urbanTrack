@@ -262,10 +262,10 @@ async function consultarHistorial() {
   const end = new Date(fin).getTime();
   if (start >= end) return;
 
+  const graficasAbiertas = chartsPanel.style.display !== "none";
   sliderContainer.style.display = "none";
   obdSnapshot.style.display = "none";
   datosHistorial = [];
-  // Cerrar graficas
   chartsPanel.style.display = "none";
   mapContainer.style.display = "";
 
@@ -289,6 +289,7 @@ async function consultarHistorial() {
     sliderRecorrido.value = 0;
     sliderContainer.style.display = "";
     actualizarSlider(0);
+    if (graficasAbiertas) mostrarGraficas();
   } catch (err) { console.error("[HISTORIAL] Error:", err); }
 }
 
