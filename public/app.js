@@ -151,8 +151,6 @@ function actualizarModoUI() {
     btnVivo.classList.add("btn--inactive");
     btnModoHistorial.classList.add("btn--active");
     btnModoHistorial.classList.remove("btn--inactive");
-    btnHistorial.classList.add("btn--active");
-    btnHistorial.classList.remove("btn--inactive");
     cardHistorial.style.display = "";
     cardObdLive.style.display = "none";
     elMapMode.textContent = "HISTORIAL";
@@ -162,8 +160,6 @@ function actualizarModoUI() {
     btnVivo.classList.remove("btn--inactive");
     btnModoHistorial.classList.remove("btn--active");
     btnModoHistorial.classList.add("btn--inactive");
-    btnHistorial.classList.remove("btn--active");
-    btnHistorial.classList.add("btn--inactive");
     cardHistorial.style.display = "none";
     cardObdLive.style.display = "";
     elMapMode.textContent = "EN VIVO";
