@@ -386,16 +386,19 @@ html, body {
 /* ── Charts Panel ──────────────────────────────────────────────────────── */
 .charts-panel {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius);
   border: 1px solid var(--gray-dark);
   background: var(--black-secondary);
   box-shadow: var(--shadow-card);
   padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
 .charts-panel__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -403,8 +406,11 @@ html, body {
 }
 
 .charts-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 14px;
 }
 
@@ -413,12 +419,21 @@ html, body {
   border-radius: 10px;
   padding: 12px;
   border: 1px solid var(--gray-dark);
-  height: 220px;
   position: relative;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
+  .charts-panel {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
   .charts-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    flex: none;
+  }
+  .chart-box {
+    height: 220px;
   }
 }
