@@ -80,6 +80,7 @@ const btnMes = document.getElementById("btn-mes");
 const sliderContainer = document.getElementById("slider-container");
 const sliderRecorrido = document.getElementById("slider-recorrido");
 const sliderInfo = document.getElementById("slider-info");
+const obdSnapshot = document.getElementById("obd-snapshot");
 const btnVerGraficas = document.getElementById("btn-ver-graficas");
 const btnCerrarGraficas = document.getElementById("btn-cerrar-graficas");
 const chartsPanel = document.getElementById("charts-panel");
@@ -239,6 +240,10 @@ function actualizarSlider(idx) {
   elFecha.textContent = tsAFecha(d.timestamp);
   elHora.textContent = tsAHora(d.timestamp);
   actualizarTrackSlider();
+  actualizarObdSnapshot(idx);
+  if (chartsPanel.style.display !== "none") {
+    actualizarLineaVertical(idx);
+  }
 }
 
 sliderRecorrido.addEventListener("input", (e) => {
@@ -262,6 +267,7 @@ async function consultarHistorial() {
   if (start >= end) return;
 
   sliderContainer.style.display = "none";
+  obdSnapshot.style.display = "none";
   datosHistorial = [];
   // Cerrar graficas
   chartsPanel.style.display = "none";
@@ -297,6 +303,7 @@ async function verEnVivo() {
   limpiarPolilineaHistorial();
 
   sliderContainer.style.display = "none";
+  obdSnapshot.style.display = "none";
   datosHistorial = [];
 
   if (marcador && marcador.getTooltip()) { marcador.unbindTooltip(); }
@@ -332,6 +339,30 @@ async function verEnVivo() {
   polilinea = null;
 }
 
+// ─── Plugin: línea vertical sincronizada con el slider ────────────────────────
+const verticalLinePlugin = {
+  id: "verticalLine",
+  afterDraw(chart) {
+    const idx = chart.options.plugins.verticalLine?.index;
+    if (idx == null) return;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta.data[idx]) return;
+    const x = meta.data[idx].x;
+    const { top, bottom } = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#FFD700";
+    ctx.setLineDash([5, 4]);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+Chart.register(verticalLinePlugin);
+
 // ─── Graficas OBD historicas ──────────────────────────────────────────────────
 let chartRpm = null;
 let chartTemp = null;
@@ -340,20 +371,24 @@ let chartO2 = null;
 
 function crearGrafica(canvasId, label, datos, color, unit) {
   const ctx = document.getElementById(canvasId).getContext("2d");
-  const labels = datos.map((d) => tsAHora(d.timestamp));
+  const labels = datos.map((d) => `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}`);
   const values = datos.map((d) => d.value);
+  const timestamps = datos.map((d) => Number(d.timestamp));
 
-  return new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: labels,
+      labels,
       datasets: [{
-        label: label,
+        label,
         data: values,
         borderColor: color,
         backgroundColor: color + "22",
         borderWidth: 2,
-        pointRadius: 0,
+        pointRadius: new Array(values.length).fill(0),
+        pointBackgroundColor: color,
+        pointBorderColor: "#1A1A1A",
+        pointBorderWidth: 2,
         fill: true,
         tension: 0.3,
       }],
@@ -365,9 +400,11 @@ function crearGrafica(canvasId, label, datos, color, unit) {
         legend: { labels: { color: "#F5F5F5", font: { size: 11 } } },
         tooltip: {
           callbacks: {
-            label: (ctx) => `${ctx.parsed.y} ${unit}`,
+            label: (c) => `${c.parsed.y} ${unit}`,
+            title: (items) => items[0]?.label ?? "",
           },
         },
+        verticalLine: { index: null },
       },
       scales: {
         x: {
@@ -381,6 +418,9 @@ function crearGrafica(canvasId, label, datos, color, unit) {
       },
     },
   });
+
+  chart._chartTimestamps = timestamps;
+  return chart;
 }
 
 function destruirGraficas() {
@@ -388,6 +428,36 @@ function destruirGraficas() {
   if (chartTemp) { chartTemp.destroy(); chartTemp = null; }
   if (chartFuel) { chartFuel.destroy(); chartFuel = null; }
   if (chartO2) { chartO2.destroy(); chartO2 = null; }
+}
+
+function indiceMasCercano(timestamps, ts) {
+  let closest = 0;
+  let minDiff = Infinity;
+  for (let i = 0; i < timestamps.length; i++) {
+    const diff = Math.abs(timestamps[i] - ts);
+    if (diff < minDiff) { minDiff = diff; closest = i; }
+  }
+  return closest;
+}
+
+function actualizarLineaVertical(sliderIdx) {
+  const ts = Number(datosHistorial[sliderIdx].timestamp);
+  [chartRpm, chartTemp, chartFuel, chartO2].forEach((chart) => {
+    if (!chart) return;
+    const idx = indiceMasCercano(chart._chartTimestamps, ts);
+    chart.data.datasets[0].pointRadius = chart.data.datasets[0].data.map((_, i) => i === idx ? 5 : 0);
+    chart.options.plugins.verticalLine.index = idx;
+    chart.update("none");
+  });
+}
+
+function actualizarObdSnapshot(idx) {
+  const d = datosHistorial[idx];
+  document.getElementById("snap-rpm").textContent = d.rpm != null ? `${d.rpm} RPM` : "—";
+  document.getElementById("snap-temp").textContent = d.temperatura != null ? `${d.temperatura} °C` : "—";
+  document.getElementById("snap-fuel").textContent = d.fuel_trim != null ? `${d.fuel_trim} %` : "—";
+  document.getElementById("snap-o2").textContent = d.o2_voltage != null ? `${d.o2_voltage} V` : "—";
+  document.getElementById("obd-snapshot").style.display = "";
 }
 
 function mostrarGraficas() {
@@ -407,6 +477,7 @@ function mostrarGraficas() {
 
   mapContainer.style.display = "none";
   chartsPanel.style.display = "";
+  actualizarLineaVertical(parseInt(sliderRecorrido.value));
 }
 
 btnVerGraficas.addEventListener("click", mostrarGraficas);
