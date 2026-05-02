@@ -370,10 +370,17 @@ let chartFuel = null;
 let chartO2 = null;
 
 function crearGrafica(canvasId, label, datos, color, unit) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
+  const canvas = document.getElementById(canvasId);
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  const ctx = canvas.getContext("2d");
   const labels = datos.map((d) => `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}`);
-  const values = datos.map((d) => d.value);
+  const values = datos.map((d) => Number(d.value));
   const timestamps = datos.map((d) => Number(d.timestamp));
+
+  const rawMin = values.length ? Math.min(...values) : 0;
+  const rawMax = values.length ? Math.max(...values) : 1;
+  const pad = (rawMax - rawMin) * 0.1 || 1;
 
   const chart = new Chart(ctx, {
     type: "line",
@@ -397,7 +404,6 @@ function crearGrafica(canvasId, label, datos, color, unit) {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      parsing: false,
       plugins: {
         legend: { labels: { color: "#F5F5F5", font: { size: 11 } } },
         tooltip: {
@@ -414,6 +420,8 @@ function crearGrafica(canvasId, label, datos, color, unit) {
           grid: { color: "#3A3A3A" },
         },
         y: {
+          suggestedMin: rawMin - pad,
+          suggestedMax: rawMax + pad,
           ticks: { color: "#6B6B6B", font: { size: 10 } },
           grid: { color: "#3A3A3A" },
         },
@@ -475,13 +483,13 @@ function mostrarGraficas() {
   mapContainer.style.display = "none";
   chartsPanel.style.display = "";
 
-  requestAnimationFrame(() => {
+  setTimeout(() => {
     chartRpm = crearGrafica("chart-rpm", "RPM", rpmData, "#FFD700", "RPM");
     chartTemp = crearGrafica("chart-temp", "Temperatura", tempData, "#F44336", "°C");
     chartFuel = crearGrafica("chart-fuel", "Fuel Trim", fuelData, "#4CAF50", "%");
     chartO2 = crearGrafica("chart-o2", "O₂ Voltaje", o2Data, "#2196F3", "V");
     actualizarLineaVertical(parseInt(sliderRecorrido.value));
-  });
+  }, 100);
 }
 
 btnVerGraficas.addEventListener("click", mostrarGraficas);
