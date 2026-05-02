@@ -394,6 +394,21 @@ function lttb(data, threshold) {
 }
 
 const LTTB_THRESHOLD = 2000;
+const GAP_MS = 5 * 60 * 1000;
+
+// O(n) — inserts {x, y: null} sentinels between consecutive points whose
+// timestamps differ by more than maxGapMs so Chart.js breaks the line there.
+function procesarDatosConGaps(points, maxGapMs) {
+  if (points.length < 2) return points;
+  const result = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].x - points[i - 1].x > maxGapMs) {
+      result.push({ x: Math.round((points[i - 1].x + points[i].x) / 2), y: null });
+    }
+    result.push(points[i]);
+  }
+  return result;
+}
 
 function crearGrafica(canvasId, label, datos, color, unit) {
   const canvas = document.getElementById(canvasId);
@@ -403,10 +418,10 @@ function crearGrafica(canvasId, label, datos, color, unit) {
 
   // {x: timestamp_ms, y: value} — no string labels generated
   const points = datos.map((d) => ({ x: Number(d.timestamp), y: Number(d.value) }));
-  const plotPoints = lttb(points, LTTB_THRESHOLD);
+  const plotPoints = procesarDatosConGaps(lttb(points, LTTB_THRESHOLD), GAP_MS);
 
   let rawMin = Infinity, rawMax = -Infinity;
-  for (const p of plotPoints) { if (p.y < rawMin) rawMin = p.y; if (p.y > rawMax) rawMax = p.y; }
+  for (const p of plotPoints) { if (p.y != null && p.y < rawMin) rawMin = p.y; if (p.y != null && p.y > rawMax) rawMax = p.y; }
   if (!isFinite(rawMin)) { rawMin = 0; rawMax = 1; }
   const pad = (rawMax - rawMin) * 0.1 || 1;
 
@@ -426,6 +441,7 @@ function crearGrafica(canvasId, label, datos, color, unit) {
         pointBorderWidth: 2,
         fill: true,
         tension: 0.3,
+        spanGaps: false,
         parsing: false,
       }],
     },
