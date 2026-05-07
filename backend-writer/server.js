@@ -109,43 +109,47 @@ udpServer.on("message", async (msg, rinfo) => {
   const partes = raw.split(",");
 
   // Formatos aceptados:
-  //   3 campos: timestamp,lat,lon                                     (legacy)
-  //   4 campos: timestamp,lat,lon,vehicle_id
-  //   7 campos: timestamp,lat,lon,rpm,temp,fuel_trim,o2               (legacy)
-  //   8 campos: timestamp,lat,lon,rpm,temp,fuel_trim,o2,vehicle_id
-  if (![3, 4, 7, 8].includes(partes.length)) {
-    console.warn("[UDP] Formato invalido, se esperaban 3, 4, 7 u 8 campos.");
+  //   8 campos: vehicle_id,timestamp,lat,lon,rpm,temp,fuel_trim,o2    (principal)
+  //   7 campos: timestamp,lat,lon,rpm,temp,fuel_trim,o2               (legacy sin vehicle_id)
+  //   3 campos: timestamp,lat,lon                                     (legacy GPS only)
+  if (![3, 7, 8].includes(partes.length)) {
+    console.warn("[UDP] Formato invalido, se esperaban 3, 7 u 8 campos.");
     return;
   }
 
-  const timestamp = parseInt(partes[0]);
-  const latitude = parseFloat(partes[1]);
-  const longitude = parseFloat(partes[2]);
+  let timestamp, latitude, longitude;
+  let rpm = null, temperatura = null, fuelTrim = null, o2Voltage = null, vehicleId = null;
+
+  if (partes.length === 8) {
+    // vehicle_id,timestamp,lat,lon,rpm,temp,fuel_trim,o2
+    const v = parseInt(partes[0]);
+    vehicleId   = isNaN(v) ? null : v;
+    timestamp   = parseInt(partes[1]);
+    latitude    = parseFloat(partes[2]);
+    longitude   = parseFloat(partes[3]);
+    rpm         = parseInt(partes[4]);    if (isNaN(rpm))         rpm         = null;
+    temperatura = parseInt(partes[5]);    if (isNaN(temperatura)) temperatura = null;
+    fuelTrim    = parseFloat(partes[6]);  if (isNaN(fuelTrim))    fuelTrim    = null;
+    o2Voltage   = parseFloat(partes[7]);  if (isNaN(o2Voltage))   o2Voltage   = null;
+  } else if (partes.length === 7) {
+    // timestamp,lat,lon,rpm,temp,fuel_trim,o2  (legacy)
+    timestamp   = parseInt(partes[0]);
+    latitude    = parseFloat(partes[1]);
+    longitude   = parseFloat(partes[2]);
+    rpm         = parseInt(partes[3]);    if (isNaN(rpm))         rpm         = null;
+    temperatura = parseInt(partes[4]);    if (isNaN(temperatura)) temperatura = null;
+    fuelTrim    = parseFloat(partes[5]);  if (isNaN(fuelTrim))    fuelTrim    = null;
+    o2Voltage   = parseFloat(partes[6]);  if (isNaN(o2Voltage))   o2Voltage   = null;
+  } else {
+    // timestamp,lat,lon  (legacy GPS only)
+    timestamp   = parseInt(partes[0]);
+    latitude    = parseFloat(partes[1]);
+    longitude   = parseFloat(partes[2]);
+  }
 
   if (isNaN(timestamp) || isNaN(latitude) || isNaN(longitude)) {
     console.warn("[UDP] Datos no numericos, paquete descartado.");
     return;
-  }
-
-  let rpm = null, temperatura = null, fuelTrim = null, o2Voltage = null, vehicleId = null;
-
-  if (partes.length >= 7) {
-    rpm = parseInt(partes[3]);
-    temperatura = parseInt(partes[4]);
-    fuelTrim = parseFloat(partes[5]);
-    o2Voltage = parseFloat(partes[6]);
-    if (isNaN(rpm)) rpm = null;
-    if (isNaN(temperatura)) temperatura = null;
-    if (isNaN(fuelTrim)) fuelTrim = null;
-    if (isNaN(o2Voltage)) o2Voltage = null;
-  }
-
-  if (partes.length === 4) {
-    const v = parseInt(partes[3]);
-    vehicleId = isNaN(v) ? null : v;
-  } else if (partes.length === 8) {
-    const v = parseInt(partes[7]);
-    vehicleId = isNaN(v) ? null : v;
   }
 
   await pool.query(
