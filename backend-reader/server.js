@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, "../public")));
 
 // ─── API Config ───────────────────────────────────────────────────────────────
-app.get("/api/config", (req, res) => {
+app.get("/api/config", (_req, res) => {
   res.json({ title: process.env.TITLE_NAME });
 });
 
@@ -46,84 +46,75 @@ function emitir(data) {
   sseClients.forEach((client) => client.write(payload));
 }
 
-// ─── Polling cada 2 segundos ──────────────────────────────────────────────────
+// ─── Polling cada 2 segundos — emite todos los registros nuevos ───────────────
 let ultimoId = 0;
 
 async function polling() {
   try {
     const result = await pool.query(
-      "SELECT id, timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
+      "SELECT id, timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions WHERE id > $1 ORDER BY id ASC",
+      [ultimoId]
     );
     if (result.rows.length === 0) return;
-    const row = result.rows[0];
-    if (row.id > ultimoId) {
-      ultimoId = row.id;
-      console.log(`[POLL] Nuevo dato id=${row.id} lat=${row.latitude} lon=${row.longitude} rpm=${row.rpm}`);
+    for (const row of result.rows) {
+      console.log(`[POLL] Nuevo dato id=${row.id} lat=${row.latitude} lon=${row.longitude} vid=${row.vehicle_id}`);
       emitir(row);
     }
+    ultimoId = result.rows[result.rows.length - 1].id;
   } catch (err) {
     console.error("[POLL] Error:", err.message);
   }
 }
 
 // ─── API REST ─────────────────────────────────────────────────────────────────
+app.get("/api/vehicles", async (_req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT DISTINCT vehicle_id FROM gps_positions WHERE vehicle_id IS NOT NULL ORDER BY vehicle_id"
+    );
+    res.json(result.rows.map((r) => r.vehicle_id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/api/latest", async (req, res) => {
-  const result = await pool.query(
-    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
-  );
+  const { vehicle_id } = req.query;
+  const query = vehicle_id
+    ? "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions WHERE vehicle_id = $1 ORDER BY id DESC LIMIT 1"
+    : "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions ORDER BY id DESC LIMIT 1";
+  const params = vehicle_id ? [parseInt(vehicle_id)] : [];
+  const result = await pool.query(query, params);
   res.json(result.rows[0] || null);
 });
 
 app.get("/api/history", async (req, res) => {
-  const result = await pool.query(
-    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions ORDER BY id DESC LIMIT 1"
-  );
+  const { vehicle_id } = req.query;
+  const query = vehicle_id
+    ? "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions WHERE vehicle_id = $1 ORDER BY id DESC LIMIT 1"
+    : "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions ORDER BY id DESC LIMIT 1";
+  const params = vehicle_id ? [parseInt(vehicle_id)] : [];
+  const result = await pool.query(query, params);
   res.json(result.rows);
 });
 
 app.get("/api/history/range", async (req, res) => {
-  const { start, end } = req.query;
+  const { start, end, vehicle_id } = req.query;
   if (!start || !end) {
     return res.status(400).json({ error: "start y end son requeridos" });
   }
-  const result = await pool.query(
-    "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC",
-    [start, end]
-  );
+  let query, params;
+  if (vehicle_id) {
+    query =
+      "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 AND vehicle_id = $3 ORDER BY timestamp ASC";
+    params = [start, end, parseInt(vehicle_id)];
+  } else {
+    query =
+      "SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage, vehicle_id FROM gps_positions WHERE timestamp BETWEEN $1 AND $2 ORDER BY timestamp ASC";
+    params = [start, end];
+  }
+  const result = await pool.query(query, params);
   res.json(result.rows);
-});
-
-app.get("/api/history/near", async (req, res) => {
-  const { lat, lon, radius, start, end } = req.query;
-  if (!lat || !lon) {
-    return res.status(400).json({ error: "lat y lon son requeridos" });
-  }
-  const r = parseFloat(radius) || 100;
-  const delta = r / 111320;
-  const latNum = parseFloat(lat);
-  const lonNum = parseFloat(lon);
-
-  let query = `
-    SELECT timestamp, latitude, longitude, rpm, temperatura, fuel_trim, o2_voltage
-    FROM gps_positions
-    WHERE latitude BETWEEN $1 AND $2
-      AND longitude BETWEEN $3 AND $4
-  `;
-  const params = [latNum - delta, latNum + delta, lonNum - delta, lonNum + delta];
-
-  if (start && end) {
-    query += ` AND timestamp BETWEEN $5 AND $6`;
-    params.push(start, end);
-  }
-
-  query += ` ORDER BY timestamp DESC`;
-
-  try {
-    const result = await pool.query(query, params);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // ─── Iniciar servidor ─────────────────────────────────────────────────────────

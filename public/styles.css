@@ -36,12 +36,45 @@ html, body {
   flex-shrink: 0; height: 60px; background: var(--black-primary);
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px; border-bottom: 2px solid var(--yellow-primary);
-  position: relative; z-index: 1000;
+  position: relative; z-index: 1000; gap: 12px;
 }
-.header__brand { display: flex; align-items: center; gap: 10px; }
+.header__brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .header__icon { font-size: 1.6rem; }
 .header__title { font-size: 1.35rem; font-weight: 700; color: var(--yellow-primary); letter-spacing: 0.5px; }
+.header__center { flex: 1; display: flex; justify-content: center; }
+.header__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .header__status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--gray-medium); }
+
+/* ── Vehicle selector ──────────────────────────────────────────────────── */
+.vehicle-select {
+  background: var(--black-secondary);
+  border: 1px solid var(--gray-dark);
+  border-radius: 6px;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition);
+  max-width: 180px;
+}
+.vehicle-select:focus { border-color: var(--yellow-primary); }
+.vehicle-select option { background: var(--black-secondary); }
+
+/* ── Hamburger (solo mobile) ───────────────────────────────────────────── */
+.btn-menu {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--gray-dark);
+  border: 1px solid var(--gray-medium);
+  border-radius: 6px;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 
 .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--status-red); transition: background var(--transition); }
 .status-dot--connected { background: var(--status-green); animation: pulse 2s ease-in-out infinite; }
@@ -216,17 +249,88 @@ html, body {
 @media (max-width: 900px) { .dashboard { grid-template-columns: 280px 1fr; gap: 12px; padding: 12px; } }
 
 @media (max-width: 768px) {
-  html, body { overflow: auto; height: auto; min-height: 100vh; }
-  .app { height: auto; min-height: 100vh; }
-  .header { height: 50px; padding: 0 14px; }
-  .header__icon { font-size: 1.3rem; }
-  .header__title { font-size: 1.1rem; }
-  .header__status { font-size: 0.78rem; }
+  /* Fullscreen layout */
+  html, body { overflow: hidden; height: 100%; }
+  .app { height: 100vh; }
+  .header { height: 50px; padding: 0 12px; gap: 8px; }
+  .header__icon { font-size: 1.2rem; }
+  .header__title { font-size: 1rem; }
+  .header__status { font-size: 0.75rem; }
+  .vehicle-select { font-size: 0.72rem; padding: 4px 8px; max-width: 110px; }
   .taxi-stripe { height: 4px; background-size: 10px 10px; }
-  .dashboard { grid-template-columns: 1fr; grid-template-rows: auto auto; gap: 12px; padding: 12px; min-height: auto; }
-  .map-area { order: -1; min-height: 55vh; height: 55vh; }
-  .map-container { min-height: 100%; border-radius: 10px; }
-  .sidebar { overflow-y: visible; gap: 12px; }
+
+  /* Dashboard: map fills everything */
+  .dashboard {
+    display: block;
+    padding: 0;
+    gap: 0;
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  .map-area {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    min-height: 0;
+  }
+  .map-container { border-radius: 0; border: none; box-shadow: none; }
+
+  /* Sidebar: fixed left drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 85vw);
+    z-index: 1100;
+    background: var(--black-primary);
+    border-right: 2px solid var(--yellow-primary);
+    padding: 60px 14px 20px;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    gap: 14px;
+  }
+  .sidebar.sidebar--open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Overlay detrás del drawer */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1050;
+  }
+  .sidebar-overlay--visible { display: block; }
+
+  /* Hamburger visible en mobile */
+  .btn-menu { display: flex; }
+
+  /* Slider fijo en la parte inferior */
+  .slider-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+    border-radius: 14px 14px 0 0;
+    border-left: none;
+    border-top: 3px solid var(--yellow-primary);
+    padding: 12px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  }
+  /* Ocultar snapshot OBD dentro del slider en mobile (no hay espacio) */
+  .slider-container .obd-snapshot { display: none !important; }
+
+  /* Map info arriba izquierda para no chocar con el slider */
+  .map-info { top: 8px; left: 8px; right: auto; bottom: auto; padding: 6px 10px; font-size: 0.66rem; min-width: 90px; border-radius: 8px; }
+
+  /* Cards dentro del drawer */
   .card { padding: 14px 16px; border-radius: 10px; }
   .card__header { margin-bottom: 10px; }
   .card__title { font-size: 0.88rem; }
@@ -234,35 +338,37 @@ html, body {
   .data-item__value { font-size: 0.92rem; }
   .data-item__value--coord { font-size: 0.95rem; }
   .input-datetime { font-size: 0.78rem; padding: 10px; }
-  .btn-group { flex-direction: row; gap: 8px; margin-top: 12px; }
-  .btn { padding: 12px 10px; font-size: 0.8rem; flex: 1; }
-  .map-info { top: auto; bottom: 8px; left: 8px; right: auto; padding: 8px 10px; font-size: 0.68rem; min-width: 100px; border-radius: 8px; }
+  .btn-group { flex-direction: column; gap: 8px; margin-top: 12px; }
+  .btn { padding: 11px 10px; font-size: 0.8rem; }
   .quick-range__btn { font-size: 0.68rem; padding: 8px 4px; }
-  .search-field { flex-direction: column; }
-  .btn--search { width: 100%; }
-  .footer { padding: 8px 14px; font-size: 0.7rem; }
+
+  /* Footer: oculto en mobile (mapa fullscreen) */
+  .footer { display: none; }
+
+  /* Charts panel ocupa todo */
+  .charts-panel { border-radius: 0; border: none; }
+  .charts-grid { grid-template-columns: 1fr; grid-template-rows: none; flex: none; }
+  .chart-box { height: 220px; }
 }
 
 @media (max-width: 420px) {
   .header { height: 46px; padding: 0 10px; }
-  .header__icon { font-size: 1.1rem; }
-  .header__title { font-size: 0.95rem; letter-spacing: 0; }
+  .header__icon { font-size: 1rem; }
+  .header__title { font-size: 0.9rem; letter-spacing: 0; }
   .status-text { display: none; }
-  .dashboard { padding: 8px; gap: 8px; }
-  .map-area { min-height: 50vh; height: 50vh; }
+  .vehicle-select { max-width: 90px; font-size: 0.68rem; }
   .card { padding: 12px 14px; border-left-width: 3px; }
   .data-grid { gap: 6px; }
   .data-item__label { font-size: 0.68rem; }
   .data-item__value { font-size: 0.85rem; }
   .data-item__value--coord { font-size: 0.88rem; }
-  .btn-group { flex-direction: column; }
-  .map-info { min-width: 100px; padding: 6px 8px; }
+  .map-info { min-width: 80px; padding: 5px 8px; }
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
-  .map-area { min-height: 60vh; height: 60vh; }
-  .header { height: 42px; }
+  .header { height: 40px; }
   .taxi-stripe { height: 3px; }
+  .sidebar { padding-top: 50px; }
 }
 
 .tab-btn--inactive {
@@ -457,17 +563,3 @@ html, body {
   min-height: 0;
 }
 
-@media (max-width: 768px) {
-  .charts-panel {
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-  .charts-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    flex: none;
-  }
-  .chart-box {
-    height: 220px;
-  }
-}

@@ -24,6 +24,7 @@ let polilinea = null;
 let coordenadas = [];
 let modoHistorial = false;
 let mapaInicializado = false;
+let vehiculoSeleccionado = null;
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -81,12 +82,28 @@ const btnVerGraficas = document.getElementById("btn-ver-graficas");
 const btnCerrarGraficas = document.getElementById("btn-cerrar-graficas");
 const chartsPanel = document.getElementById("charts-panel");
 const mapContainer = document.querySelector(".map-container");
+const vehicleSelect = document.getElementById("vehicle-select");
+const btnMenu = document.getElementById("btn-menu");
+const sidebarEl = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
 
 // OBD live elements
 const elObdRpm = document.getElementById("obd-rpm");
 const elObdTemp = document.getElementById("obd-temp");
 const elObdFuel = document.getElementById("obd-fuel");
 const elObdO2 = document.getElementById("obd-o2");
+
+// ─── Mobile sidebar toggle ────────────────────────────────────────────────────
+function cerrarSidebar() {
+  sidebarEl.classList.remove("sidebar--open");
+  sidebarOverlay.classList.remove("sidebar-overlay--visible");
+}
+
+btnMenu.addEventListener("click", () => {
+  sidebarEl.classList.toggle("sidebar--open");
+  sidebarOverlay.classList.toggle("sidebar-overlay--visible");
+});
+sidebarOverlay.addEventListener("click", cerrarSidebar);
 
 // ─── OBD Live Update ─────────────────────────────────────────────────────────
 function actualizarOBD(data) {
@@ -95,6 +112,39 @@ function actualizarOBD(data) {
   elObdFuel.textContent = data.fuel_trim != null ? `${data.fuel_trim} %` : "—";
   elObdO2.textContent = data.o2_voltage != null ? `${data.o2_voltage} V` : "—";
 }
+
+// ─── Vehicle selector ─────────────────────────────────────────────────────────
+async function cargarVehiculos() {
+  try {
+    const res = await fetch("/api/vehicles");
+    const ids = await res.json();
+    ids.forEach((id) => {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `ID ${id}`;
+      vehicleSelect.appendChild(opt);
+    });
+    if (ids.length === 0) {
+      vehicleSelect.style.display = "none";
+    } else if (ids.length === 1) {
+      vehicleSelect.value = ids[0];
+      vehiculoSeleccionado = ids[0];
+    }
+  } catch (err) {
+    console.error("[VEHICULOS] Error:", err);
+  }
+}
+
+vehicleSelect.addEventListener("change", (e) => {
+  vehiculoSeleccionado = e.target.value ? Number(e.target.value) : null;
+  if (!modoHistorial) {
+    coordenadas = [];
+    limpiarPolilineaHistorial();
+    cargarHistorial();
+  } else if (elFechaInicio.value && elFechaFin.value) {
+    consultarHistorial();
+  }
+});
 
 // ─── Validacion fechas ────────────────────────────────────────────────────────
 elFechaInicio.addEventListener("change", () => {
@@ -164,7 +214,6 @@ function actualizarModoUI() {
     cardObdLive.style.display = "";
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
-    // Cerrar graficas si estan abiertas
     chartsPanel.style.display = "none";
     mapContainer.style.display = "";
   }
@@ -185,9 +234,13 @@ function actualizarActual(data) {
   actualizarOBD(data);
 }
 
+function vehicleParam() {
+  return vehiculoSeleccionado != null ? `&vehicle_id=${vehiculoSeleccionado}` : "";
+}
+
 async function cargarHistorial() {
   try {
-    const res = await fetch("/api/history");
+    const res = await fetch(`/api/history?_=${Date.now()}${vehicleParam()}`);
     const datos = await res.json();
     if (datos.length === 0) return;
     actualizarActual(datos[0]);
@@ -243,7 +296,7 @@ sliderRecorrido.addEventListener("input", (e) => {
   actualizarSlider(parseInt(e.target.value));
 });
 
-// ─── Botones de acción historial (activo/inactivo) ────────────────────────────
+// ─── Botones de acción historial ──────────────────────────────────────────────
 function actualizarBotonesAccion(activo) {
   if (activo === "recorrido") {
     btnHistorial.classList.add("btn--active");
@@ -272,7 +325,7 @@ async function consultarDatosRango() {
   const start = new Date(inicio).getTime();
   const end = new Date(fin).getTime();
   if (start >= end) return null;
-  const res = await fetch(`/api/history/range?start=${start}&end=${end}`);
+  const res = await fetch(`/api/history/range?start=${start}&end=${end}${vehicleParam()}`);
   return await res.json();
 }
 
@@ -305,6 +358,7 @@ async function consultarHistorial() {
     sliderRecorrido.value = 0;
     sliderContainer.style.display = "";
     actualizarSlider(0);
+    cerrarSidebar();
   } catch (err) { console.error("[HISTORIAL] Error:", err); }
 }
 
@@ -339,6 +393,7 @@ async function consultarTelemetriaHistorica() {
     actualizarSlider(0);
 
     mostrarGraficas();
+    cerrarSidebar();
   } catch (err) { console.error("[TELEMETRIA] Error:", err); }
 }
 
@@ -362,7 +417,7 @@ async function verEnVivo() {
   limpiarQuickRangeActivo();
 
   try {
-    const res = await fetch("/api/history");
+    const res = await fetch(`/api/history?_=${Date.now()}${vehicleParam()}`);
     const datos = await res.json();
     if (datos.length > 0) {
       const lat = Number(datos[0].latitude);
@@ -384,6 +439,7 @@ async function verEnVivo() {
     coordenadas = [];
   }
   polilinea = null;
+  cerrarSidebar();
 }
 
 // ─── Plugin: línea vertical sincronizada con el slider ────────────────────────
@@ -416,7 +472,6 @@ let chartTemp = null;
 let chartFuel = null;
 let chartO2 = null;
 
-// LTTB downsampling — preserves visual shape while reducing point count
 function lttb(data, threshold) {
   const n = data.length;
   if (n <= threshold) return data;
@@ -447,8 +502,6 @@ function lttb(data, threshold) {
 const LTTB_THRESHOLD = 2000;
 const GAP_MS = 5 * 60 * 1000;
 
-// O(n) — inserts {x, y: null} sentinels between consecutive points whose
-// timestamps differ by more than maxGapMs so Chart.js breaks the line there.
 function procesarDatosConGaps(points, maxGapMs) {
   if (points.length < 2) return points;
   const result = [points[0]];
@@ -467,7 +520,6 @@ function crearGrafica(canvasId, label, datos, color, unit) {
   canvas.style.height = "100%";
   const ctx = canvas.getContext("2d");
 
-  // {x: timestamp_ms, y: value} — no string labels generated
   const points = datos.map((d) => ({ x: Number(d.timestamp), y: Number(d.value) }));
   const plotPoints = procesarDatosConGaps(lttb(points, LTTB_THRESHOLD), GAP_MS);
 
@@ -485,7 +537,6 @@ function crearGrafica(canvasId, label, datos, color, unit) {
         borderColor: color,
         backgroundColor: color + "22",
         borderWidth: 2,
-        // scriptable: O(1) update — only reads chart._activeIdx, no array rebuild
         pointRadius: (c) => c.dataIndex === c.chart._activeIdx ? 5 : 0,
         pointBackgroundColor: color,
         pointBorderColor: "#1A1A1A",
@@ -544,7 +595,6 @@ function destruirGraficas() {
   if (chartO2) { chartO2.destroy(); chartO2 = null; }
 }
 
-// O(log n) binary search on sorted {x, y} points
 function binarySearchClosest(points, ts) {
   let lo = 0, hi = points.length - 1;
   while (lo < hi) {
@@ -623,6 +673,8 @@ function conectarSSE() {
     try {
       if (modoHistorial) return;
       const data = JSON.parse(event.data);
+      // Filtrar por vehículo seleccionado
+      if (vehiculoSeleccionado != null && data.vehicle_id !== vehiculoSeleccionado) return;
       actualizarActual(data);
     } catch (e) { console.error("[SSE] Error:", e); }
   };
@@ -640,9 +692,11 @@ btnVivo.addEventListener("click", verEnVivo);
 btnModoHistorial.addEventListener("click", () => {
   modoHistorial = true;
   actualizarModoUI();
+  cerrarSidebar();
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 cargarConfig();
+cargarVehiculos();
 cargarHistorial();
 conectarSSE();
