@@ -24,34 +24,51 @@ let polilinea = null;
 let coordenadas = [];
 let modoHistorial = false;
 let mapaInicializado = false;
-let vehiculoSeleccionado = null;
+let vehiculoSeleccionado = 1;
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   maxZoom: 19,
 }).addTo(mapa);
 
-const taxiIcon = L.divIcon({
-  className: "",
-  html: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="14" cy="14" r="12" fill="#1A1A1A" stroke="#FFD700" stroke-width="3"/>
-    <circle cx="14" cy="14" r="5" fill="#FFD700"/>
-  </svg>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
+const VEHICLE_STYLES = {
+  1: { polyline: "#000000", iconStroke: "#FFD700", iconFill: "#FFD700" },
+  2: { polyline: "#1565C0", iconStroke: "#2196F3", iconFill: "#2196F3" },
+};
+
+function crearTaxiIcon(stroke, fill) {
+  return L.divIcon({
+    className: "",
+    html: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="14" cy="14" r="12" fill="#1A1A1A" stroke="${stroke}" stroke-width="3"/>
+      <circle cx="14" cy="14" r="5" fill="${fill}"/>
+    </svg>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
+function getVehicleIcon() {
+  const s = VEHICLE_STYLES[vehiculoSeleccionado] || VEHICLE_STYLES[1];
+  return crearTaxiIcon(s.iconStroke, s.iconFill);
+}
+
+function getPolylineColor() {
+  return (VEHICLE_STYLES[vehiculoSeleccionado] || VEHICLE_STYLES[1]).polyline;
+}
 
 function moverMarcador(lat, lon) {
+  const icon = getVehicleIcon();
   const latlng = [lat, lon];
-  if (marcador) { marcador.setLatLng(latlng); }
-  else { marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa); }
+  if (marcador) { marcador.setLatLng(latlng); marcador.setIcon(icon); }
+  else { marcador = L.marker(latlng, { icon }).addTo(mapa); }
   if (!mapaInicializado) { mapa.setView(latlng, 15); mapaInicializado = true; }
   else if (!modoHistorial) { mapa.panTo(latlng); }
   if (!modoHistorial) {
     coordenadas.push(latlng);
     if (polilinea) { polilinea.setLatLngs(coordenadas); }
     else if (coordenadas.length >= 2) {
-      polilinea = L.polyline(coordenadas, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+      polilinea = L.polyline(coordenadas, { color: getPolylineColor(), weight: 4, opacity: 0.9 }).addTo(mapa);
     }
   }
 }
@@ -114,29 +131,8 @@ function actualizarOBD(data) {
 }
 
 // ─── Vehicle selector ─────────────────────────────────────────────────────────
-async function cargarVehiculos() {
-  try {
-    const res = await fetch("/api/vehicles");
-    const ids = await res.json();
-    ids.forEach((id) => {
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = `ID ${id}`;
-      vehicleSelect.appendChild(opt);
-    });
-    if (ids.length === 0) {
-      vehicleSelect.style.display = "none";
-    } else if (ids.length === 1) {
-      vehicleSelect.value = ids[0];
-      vehiculoSeleccionado = ids[0];
-    }
-  } catch (err) {
-    console.error("[VEHICULOS] Error:", err);
-  }
-}
-
 vehicleSelect.addEventListener("change", (e) => {
-  vehiculoSeleccionado = e.target.value ? Number(e.target.value) : null;
+  vehiculoSeleccionado = Number(e.target.value);
   if (!modoHistorial) {
     coordenadas = [];
     limpiarPolilineaHistorial();
@@ -266,8 +262,9 @@ function actualizarSlider(idx) {
   const lon = Number(d.longitude);
   const latlng = [lat, lon];
 
-  if (marcador) { marcador.setLatLng(latlng); }
-  else { marcador = L.marker(latlng, { icon: taxiIcon }).addTo(mapa); }
+  const icon = getVehicleIcon();
+  if (marcador) { marcador.setLatLng(latlng); marcador.setIcon(icon); }
+  else { marcador = L.marker(latlng, { icon }).addTo(mapa); }
 
   const fechaStr = `${tsAFecha(d.timestamp)} ${tsAHora(d.timestamp)}`;
   const tooltipHTML = `<b>${fechaStr}</b><br>${lat.toFixed(5)}, ${lon.toFixed(5)}`;
@@ -349,7 +346,7 @@ async function consultarHistorial() {
     if (datos.length === 0) return;
 
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
-    polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+    polilinea = L.polyline(puntos, { color: getPolylineColor(), weight: 4, opacity: 0.9 }).addTo(mapa);
     mapa.flyToBounds(polilinea.getBounds(), { padding: [40, 40], maxZoom: 18, duration: 0.5 });
 
     datosHistorial = datos;
@@ -383,7 +380,7 @@ async function consultarTelemetriaHistorica() {
     if (datos.length === 0) return;
 
     const puntos = datos.map((d) => [Number(d.latitude), Number(d.longitude)]);
-    polilinea = L.polyline(puntos, { color: "#000000", weight: 4, opacity: 0.9 }).addTo(mapa);
+    polilinea = L.polyline(puntos, { color: getPolylineColor(), weight: 4, opacity: 0.9 }).addTo(mapa);
 
     datosHistorial = datos;
     sliderRecorrido.min = 0;
@@ -393,7 +390,6 @@ async function consultarTelemetriaHistorica() {
     actualizarSlider(0);
 
     mostrarGraficas();
-    cerrarSidebar();
   } catch (err) { console.error("[TELEMETRIA] Error:", err); }
 }
 
@@ -423,8 +419,9 @@ async function verEnVivo() {
       const lat = Number(datos[0].latitude);
       const lon = Number(datos[0].longitude);
       coordenadas = [[lat, lon]];
-      if (marcador) { marcador.setLatLng([lat, lon]); }
-      else { marcador = L.marker([lat, lon], { icon: taxiIcon }).addTo(mapa); }
+      const icon = getVehicleIcon();
+      if (marcador) { marcador.setLatLng([lat, lon]); marcador.setIcon(icon); }
+      else { marcador = L.marker([lat, lon], { icon }).addTo(mapa); }
       mapa.setView([lat, lon], 15);
       elLatitud.textContent = lat.toFixed(6);
       elLongitud.textContent = lon.toFixed(6);
@@ -439,7 +436,6 @@ async function verEnVivo() {
     coordenadas = [];
   }
   polilinea = null;
-  cerrarSidebar();
 }
 
 // ─── Plugin: línea vertical sincronizada con el slider ────────────────────────
@@ -692,11 +688,9 @@ btnVivo.addEventListener("click", verEnVivo);
 btnModoHistorial.addEventListener("click", () => {
   modoHistorial = true;
   actualizarModoUI();
-  cerrarSidebar();
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 cargarConfig();
-cargarVehiculos();
 cargarHistorial();
 conectarSSE();
