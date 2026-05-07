@@ -20,6 +20,7 @@ async function inicializar() {
       temperatura INTEGER,
       fuel_trim  REAL,
       o2_voltage REAL,
+      vehicle_id INTEGER,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -29,6 +30,7 @@ async function inicializar() {
   await pool.query(`ALTER TABLE gps_positions ADD COLUMN IF NOT EXISTS temperatura INTEGER`);
   await pool.query(`ALTER TABLE gps_positions ADD COLUMN IF NOT EXISTS fuel_trim REAL`);
   await pool.query(`ALTER TABLE gps_positions ADD COLUMN IF NOT EXISTS o2_voltage REAL`);
+  await pool.query(`ALTER TABLE gps_positions ADD COLUMN IF NOT EXISTS vehicle_id INTEGER`);
 
   console.log("[DB] Tabla gps_positions lista (con columnas OBD-II).");
 }
