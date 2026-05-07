@@ -15,15 +15,27 @@
           <span class="header__icon">🚕</span>
           <span class="header__title">urbanTrack</span>
         </div>
-        <div class="header__status">
-          <span class="status-dot" id="status-dot"></span>
-          <span class="status-text" id="estado">Desconectado</span>
+        <div class="header__center">
+          <select id="vehicle-select" class="vehicle-select">
+            <option value="1">Vehículo 1</option>
+            <option value="2">Vehículo 2</option>
+          </select>
+        </div>
+        <div class="header__right">
+          <div class="header__status">
+            <span class="status-dot" id="status-dot"></span>
+            <span class="status-text" id="estado">Desconectado</span>
+          </div>
+          <button id="btn-menu" class="btn-menu" aria-label="Menú">&#9776;</button>
         </div>
       </header>
       <div class="taxi-stripe"></div>
 
+      <!-- Overlay para cerrar sidebar en mobile -->
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
       <main class="dashboard">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
 
           <section class="card">
             <div class="card__header">
