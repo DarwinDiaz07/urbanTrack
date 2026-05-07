@@ -279,6 +279,15 @@ html, body {
   padding: 14px 18px 16px;
 }
 
+.slider-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--yellow-primary);
+  margin-bottom: 6px;
+}
+
 .slider-info {
   font-size: 0.72rem;
   color: var(--gray-medium);
@@ -345,6 +354,64 @@ html, body {
   border-top-color: var(--yellow-primary);
 }
 
+/* ── OBD Snapshot (slider) ─────────────────────────────────────────────── */
+.obd-snapshot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--black-primary);
+  border-radius: 8px;
+  border: 1px solid var(--gray-dark);
+}
+
+.obd-snapshot__title {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--yellow-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.obd-snapshot__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.obd-snapshot__label {
+  font-size: 0.68rem;
+  color: var(--gray-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.obd-snapshot__value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--yellow-primary);
+  font-family: var(--font-mono);
+}
+
+/* ── Action Buttons (Ver recorrido / Ver telemetría histórica) ─────────── */
+.btn--action {
+  background: var(--gray-dark);
+  color: var(--text-light);
+  border: 1px solid var(--gray-medium);
+}
+.btn--action:hover { background: var(--gray-medium); }
+.btn--action.btn--active {
+  background: var(--yellow-primary);
+  color: var(--black-primary);
+  border-color: var(--yellow-primary);
+  opacity: 1;
+}
+.btn--action.btn--inactive { opacity: 0.45; }
+
 /* ── OBD Live Card ─────────────────────────────────────────────────────── */
 #card-obd-live .data-item__value {
   font-size: 1rem;
@@ -353,16 +420,19 @@ html, body {
 /* ── Charts Panel ──────────────────────────────────────────────────────── */
 .charts-panel {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius);
   border: 1px solid var(--gray-dark);
   background: var(--black-secondary);
   box-shadow: var(--shadow-card);
   padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
 .charts-panel__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -370,8 +440,11 @@ html, body {
 }
 
 .charts-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 14px;
 }
 
@@ -380,10 +453,21 @@ html, body {
   border-radius: 10px;
   padding: 12px;
   border: 1px solid var(--gray-dark);
+  position: relative;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
+  .charts-panel {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
   .charts-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    flex: none;
+  }
+  .chart-box {
+    height: 220px;
   }
 }

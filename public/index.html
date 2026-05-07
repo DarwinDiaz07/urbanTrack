@@ -103,14 +103,34 @@
               </div>
             </div>
             <div class="btn-group">
-              <button id="btn-historial" class="btn btn--primary">Ver recorrido</button>
+              <button id="btn-historial" class="btn btn--action">Ver recorrido</button>
+              <button id="btn-ver-graficas" class="btn btn--action">📊 Ver telemetría histórica</button>
             </div>
           </section>
 
           <div id="slider-container" class="slider-container" style="display:none">
+            <div class="slider-title">Navega en el tiempo</div>
             <div id="slider-info" class="slider-info">—</div>
             <input type="range" id="slider-recorrido" class="slider-recorrido" min="0" max="0" value="0" step="1" />
-            <button id="btn-ver-graficas" class="btn btn--primary" style="margin-top:12px;">📊 Ver telemetría histórica</button>
+            <div id="obd-snapshot" class="obd-snapshot" style="display:none">
+              <div class="obd-snapshot__title">🔧 Datos OBD</div>
+              <div class="obd-snapshot__item">
+                <span class="obd-snapshot__label">RPM</span>
+                <span class="obd-snapshot__value" id="snap-rpm">—</span>
+              </div>
+              <div class="obd-snapshot__item">
+                <span class="obd-snapshot__label">Temp</span>
+                <span class="obd-snapshot__value" id="snap-temp">—</span>
+              </div>
+              <div class="obd-snapshot__item">
+                <span class="obd-snapshot__label">Fuel Trim</span>
+                <span class="obd-snapshot__value" id="snap-fuel">—</span>
+              </div>
+              <div class="obd-snapshot__item">
+                <span class="obd-snapshot__label">O₂ Voltaje</span>
+                <span class="obd-snapshot__value" id="snap-o2">—</span>
+              </div>
+            </div>
           </div>
 
         </aside>
