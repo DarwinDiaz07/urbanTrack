@@ -25,7 +25,7 @@ let polilinea = null;
 let coordenadas = [];
 let modoHistorial = false;
 let mapaInicializado = false;
-let vehiculoSeleccionado = 1;
+let vehiculoSeleccionado = null; // null = "Todos", number = vehículo específico
 let siguiendoVehiculo = false;
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -68,13 +68,16 @@ function actualizarMarcadorEnMapa(vehicleId, lat, lon) {
     marcadores[vehicleId].setIcon(getIconVehiculo(vehicleId));
   } else {
     const icon = getIconVehiculo(vehicleId);
-    const m = L.marker(latlng, { icon }).addTo(mapa);
+    const m = L.marker(latlng, { icon });
+    const debeSerVisible = vehiculoSeleccionado === null || vehicleId === vehiculoSeleccionado;
+    if (debeSerVisible) m.addTo(mapa);
     m.on("click", () => cambiarVehiculo(vehicleId));
     marcadores[vehicleId] = m;
   }
 }
 
 function moverMarcador(lat, lon) {
+  if (vehiculoSeleccionado === null) return;
   actualizarMarcadorEnMapa(vehiculoSeleccionado, lat, lon);
   if (!mapaInicializado) {
     mapa.setView([lat, lon], 15);
@@ -119,6 +122,7 @@ const btnCerrarGraficas = document.getElementById("btn-cerrar-graficas");
 const chartsPanel = document.getElementById("charts-panel");
 const mapContainer = document.querySelector(".map-container");
 const vehicleSelect = document.getElementById("vehicle-select");
+const optTodos = document.getElementById("opt-todos");
 const btnMenu = document.getElementById("btn-menu");
 const sidebarEl = document.getElementById("sidebar");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
@@ -162,20 +166,37 @@ function enfocarVehiculo(vehicleId) {
 // ─── Cambiar vehículo seleccionado ────────────────────────────────────────────
 function cambiarVehiculo(vehicleId) {
   vehiculoSeleccionado = vehicleId;
-  vehicleSelect.value = vehicleId;
-  enfocarVehiculo(vehicleId);
-  if (!modoHistorial) {
+  vehicleSelect.value = vehicleId === null ? "" : String(vehicleId);
+  if (vehicleId === null) {
+    // Modo Todos: mostrar todos los marcadores sin seguir ninguno
+    siguiendoVehiculo = false;
     coordenadas = [];
     limpiarPolilineaHistorial();
-    cargarHistorial();
-  } else if (elFechaInicio.value && elFechaFin.value) {
-    consultarHistorial();
+    sincronizarVisibilidadMarcadores();
+    const posiciones = Object.values(vehiculosUltimaPos);
+    if (posiciones.length >= 2) {
+      mapa.fitBounds(
+        L.latLngBounds(posiciones.map((p) => [p.lat, p.lon])),
+        { padding: [60, 60], maxZoom: 15 }
+      );
+    }
+  } else {
+    enfocarVehiculo(vehicleId);
+    sincronizarVisibilidadMarcadores();
+    if (!modoHistorial) {
+      coordenadas = [];
+      limpiarPolilineaHistorial();
+      cargarHistorial();
+    } else if (elFechaInicio.value && elFechaFin.value) {
+      consultarHistorial();
+    }
   }
 }
 
 // ─── Vehicle selector ─────────────────────────────────────────────────────────
 vehicleSelect.addEventListener("change", (e) => {
-  cambiarVehiculo(Number(e.target.value));
+  const val = e.target.value;
+  cambiarVehiculo(val === "" ? null : Number(val));
 });
 
 // ─── Validacion fechas ────────────────────────────────────────────────────────
@@ -237,7 +258,11 @@ function actualizarModoUI() {
     cardObdLive.style.display = "none";
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
-    ocultarMarcadoresSecundarios();
+    // "Todos" no aplica en historial: forzar V1 si estaba seleccionado
+    if (vehiculoSeleccionado === null) vehiculoSeleccionado = 1;
+    optTodos.hidden = true;
+    vehicleSelect.value = String(vehiculoSeleccionado);
+    sincronizarVisibilidadMarcadores();
   } else {
     btnVivo.classList.add("btn--active");
     btnVivo.classList.remove("btn--inactive");
@@ -249,7 +274,19 @@ function actualizarModoUI() {
     elMapMode.className = "map-info__value map-info__value--live";
     chartsPanel.style.display = "none";
     mapContainer.style.display = "";
-    restaurarMarcadoresSecundarios();
+    // Restaurar modo Todos al volver a en vivo
+    optTodos.hidden = false;
+    vehiculoSeleccionado = null;
+    vehicleSelect.value = "";
+    siguiendoVehiculo = false;
+    sincronizarVisibilidadMarcadores();
+    const posiciones = Object.values(vehiculosUltimaPos);
+    if (posiciones.length >= 2) {
+      mapa.fitBounds(
+        L.latLngBounds(posiciones.map((p) => [p.lat, p.lon])),
+        { padding: [60, 60], maxZoom: 15 }
+      );
+    }
   }
 }
 
@@ -286,19 +323,11 @@ function limpiarPolilineaHistorial() {
   if (polilinea) { mapa.removeLayer(polilinea); polilinea = null; }
 }
 
-function ocultarMarcadoresSecundarios() {
+function sincronizarVisibilidadMarcadores() {
   Object.entries(marcadores).forEach(([id, m]) => {
-    if (Number(id) !== vehiculoSeleccionado && mapa.hasLayer(m)) {
-      mapa.removeLayer(m);
-    }
-  });
-}
-
-function restaurarMarcadoresSecundarios() {
-  Object.entries(marcadores).forEach(([id, m]) => {
-    if (Number(id) !== vehiculoSeleccionado && !mapa.hasLayer(m)) {
-      m.addTo(mapa);
-    }
+    const visible = vehiculoSeleccionado === null || Number(id) === vehiculoSeleccionado;
+    if (visible && !mapa.hasLayer(m)) m.addTo(mapa);
+    else if (!visible && mapa.hasLayer(m)) mapa.removeLayer(m);
   });
 }
 
@@ -455,18 +484,19 @@ async function consultarTelemetriaHistorica() {
 }
 
 // ─── Volver a en vivo ─────────────────────────────────────────────────────────
-async function verEnVivo() {
+function verEnVivo() {
   modoHistorial = false;
-  actualizarModoUI();
+  actualizarModoUI(); // → vehiculoSeleccionado = null, todos los marcadores, fitBounds
   actualizarBotonesAccion(null);
   limpiarPolilineaHistorial();
 
   sliderContainer.style.display = "none";
   obdSnapshot.style.display = "none";
   datosHistorial = [];
+  coordenadas = [];
 
-  const mSeleccionado = marcadores[vehiculoSeleccionado];
-  if (mSeleccionado && mSeleccionado.getTooltip()) { mSeleccionado.unbindTooltip(); }
+  // Quitar tooltip del slider de cualquier marcador activo
+  Object.values(marcadores).forEach(m => { if (m.getTooltip()) m.unbindTooltip(); });
 
   elFechaInicio.value = "";
   elFechaFin.value = "";
@@ -474,28 +504,10 @@ async function verEnVivo() {
   elFechaFin.min = "";
   limpiarQuickRangeActivo();
 
-  try {
-    const res = await fetch(`/api/latest?vehicle_id=${vehiculoSeleccionado}&_=${Date.now()}`);
-    const data = await res.json();
-    if (data) {
-      const lat = Number(data.latitude);
-      const lon = Number(data.longitude);
-      coordenadas = [[lat, lon]];
-      actualizarMarcadorEnMapa(vehiculoSeleccionado, lat, lon);
-      enfocarVehiculo(vehiculoSeleccionado);
-      elLatitud.textContent = lat.toFixed(6);
-      elLongitud.textContent = lon.toFixed(6);
-      elFecha.textContent = tsAFecha(data.timestamp);
-      elHora.textContent = tsAHora(data.timestamp);
-      actualizarOBD(data);
-    } else {
-      coordenadas = [];
-    }
-  } catch (err) {
-    console.error("[VIVO] Error:", err);
-    coordenadas = [];
-  }
-  polilinea = null;
+  elLatitud.textContent = "—";
+  elLongitud.textContent = "—";
+  elFecha.textContent = "—";
+  elHora.textContent = "—";
 }
 
 // ─── Plugin: línea vertical sincronizada con el slider ────────────────────────
@@ -774,10 +786,18 @@ function conectarSSE() {
       if (modoHistorial) return;
       const data = JSON.parse(event.data);
       const vehicleId = data.vehicle_id;
-      if (vehicleId === vehiculoSeleccionado) {
-        actualizarActual(data); // marcador + UI + trail del vehículo seleccionado
-      } else {
+      if (vehiculoSeleccionado === null) {
+        // Todos: actualizar marcador de cualquier vehículo sin trail ni UI
         actualizarMarcadorEnMapa(vehicleId, Number(data.latitude), Number(data.longitude));
+      } else if (vehicleId === vehiculoSeleccionado) {
+        // Vehículo específico seleccionado: marcador + UI + trail
+        actualizarActual(data);
+      } else {
+        // Otro vehículo: actualizar posición interna pero no el mapa (marcador oculto)
+        vehiculosUltimaPos[vehicleId] = { lat: Number(data.latitude), lon: Number(data.longitude) };
+        if (marcadores[vehicleId]) {
+          marcadores[vehicleId].setLatLng([Number(data.latitude), Number(data.longitude)]);
+        }
       }
     } catch (e) { console.error("[SSE] Error:", e); }
   };
