@@ -237,6 +237,7 @@ function actualizarModoUI() {
     cardObdLive.style.display = "none";
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
+    ocultarMarcadoresSecundarios();
   } else {
     btnVivo.classList.add("btn--active");
     btnVivo.classList.remove("btn--inactive");
@@ -248,6 +249,7 @@ function actualizarModoUI() {
     elMapMode.className = "map-info__value map-info__value--live";
     chartsPanel.style.display = "none";
     mapContainer.style.display = "";
+    restaurarMarcadoresSecundarios();
   }
 }
 
@@ -282,6 +284,22 @@ async function cargarHistorial() {
 // ─── Limpiar capas ────────────────────────────────────────────────────────────
 function limpiarPolilineaHistorial() {
   if (polilinea) { mapa.removeLayer(polilinea); polilinea = null; }
+}
+
+function ocultarMarcadoresSecundarios() {
+  Object.entries(marcadores).forEach(([id, m]) => {
+    if (Number(id) !== vehiculoSeleccionado && mapa.hasLayer(m)) {
+      mapa.removeLayer(m);
+    }
+  });
+}
+
+function restaurarMarcadoresSecundarios() {
+  Object.entries(marcadores).forEach(([id, m]) => {
+    if (Number(id) !== vehiculoSeleccionado && !mapa.hasLayer(m)) {
+      m.addTo(mapa);
+    }
+  });
 }
 
 // ─── Slider de recorrido ──────────────────────────────────────────────────────
