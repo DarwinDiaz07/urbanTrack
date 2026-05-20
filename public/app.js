@@ -123,6 +123,7 @@ const chartsPanel = document.getElementById("charts-panel");
 const mapContainer = document.querySelector(".map-container");
 const vehicleSelect = document.getElementById("vehicle-select");
 const optTodos = document.getElementById("opt-todos");
+const cardPosicion = document.getElementById("card-posicion");
 const btnMenu = document.getElementById("btn-menu");
 const sidebarEl = document.getElementById("sidebar");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
@@ -191,6 +192,7 @@ function cambiarVehiculo(vehicleId) {
       consultarHistorial();
     }
   }
+  actualizarVisibilidadDatos();
 }
 
 // ─── Vehicle selector ─────────────────────────────────────────────────────────
@@ -247,6 +249,18 @@ btnMes.addEventListener("click", () => {
   btnHistorial.click();
 });
 
+// ─── Visibilidad de datos según vehículo seleccionado ─────────────────────────
+function actualizarVisibilidadDatos() {
+  const hayVehiculo = vehiculoSeleccionado !== null;
+  cardPosicion.style.display = hayVehiculo ? "" : "none";
+  cardObdLive.style.display = (hayVehiculo && !modoHistorial) ? "" : "none";
+  if (hayVehiculo) {
+    vehicleSelect.classList.add("vehicle-select--vehicle-active");
+  } else {
+    vehicleSelect.classList.remove("vehicle-select--vehicle-active");
+  }
+}
+
 // ─── UI del modo ──────────────────────────────────────────────────────────────
 function actualizarModoUI() {
   if (modoHistorial) {
@@ -255,7 +269,6 @@ function actualizarModoUI() {
     btnModoHistorial.classList.add("btn--active");
     btnModoHistorial.classList.remove("btn--inactive");
     cardHistorial.style.display = "";
-    cardObdLive.style.display = "none";
     elMapMode.textContent = "HISTORIAL";
     elMapMode.className = "map-info__value map-info__value--historial";
     // "Todos" no aplica en historial: forzar V1 si estaba seleccionado
@@ -269,7 +282,6 @@ function actualizarModoUI() {
     btnModoHistorial.classList.remove("btn--active");
     btnModoHistorial.classList.add("btn--inactive");
     cardHistorial.style.display = "none";
-    cardObdLive.style.display = "";
     elMapMode.textContent = "EN VIVO";
     elMapMode.className = "map-info__value map-info__value--live";
     chartsPanel.style.display = "none";
@@ -288,6 +300,7 @@ function actualizarModoUI() {
       );
     }
   }
+  actualizarVisibilidadDatos();
 }
 
 actualizarModoUI();
