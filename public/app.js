@@ -146,6 +146,23 @@ btnMenu.addEventListener("click", () => {
 });
 sidebarOverlay.addEventListener("click", cerrarSidebar);
 
+// ─── Mobile: sacar el slider del sidebar para que position:fixed ancle al viewport ──
+// El sidebar usa transform:translateX, lo que convierte en bloque contenedor a los
+// elementos position:fixed que viven dentro de él. Al moverlo a <body> en mobile,
+// el position:fixed del slider funciona correctamente sin modificar el desktop.
+const mqMobile = window.matchMedia("(max-width: 768px)");
+
+function reposicionarSlider(esMobile) {
+  if (esMobile) {
+    document.body.appendChild(sliderContainer);
+  } else {
+    sidebarEl.appendChild(sliderContainer);
+  }
+}
+
+mqMobile.addEventListener("change", (e) => reposicionarSlider(e.matches));
+reposicionarSlider(mqMobile.matches);
+
 // ─── OBD Live Update ─────────────────────────────────────────────────────────
 function actualizarOBD(data) {
   elObdRpm.textContent = data.rpm != null ? `${data.rpm} RPM` : "—";
