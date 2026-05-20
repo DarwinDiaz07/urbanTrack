@@ -61,6 +61,11 @@ html, body {
 }
 .vehicle-select:focus { border-color: var(--yellow-primary); }
 .vehicle-select option { background: var(--black-secondary); }
+.vehicle-select--vehicle-active {
+  border-color: var(--yellow-primary);
+  color: var(--yellow-primary);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.18);
+}
 
 /* ── Hamburger (solo mobile) ───────────────────────────────────────────── */
 .btn-menu {
@@ -256,7 +261,7 @@ html, body {
   .header__icon { font-size: 1.2rem; }
   .header__title { font-size: 1rem; }
   .header__status { font-size: 0.75rem; }
-  .vehicle-select { font-size: 0.72rem; padding: 4px 8px; max-width: 110px; }
+  .vehicle-select { font-size: 0.72rem; padding: 4px 8px; max-width: 140px; }
   .taxi-stripe { height: 4px; background-size: 10px 10px; }
 
   /* Dashboard: map fills everything */
@@ -356,7 +361,7 @@ html, body {
   .header__icon { font-size: 1rem; }
   .header__title { font-size: 0.9rem; letter-spacing: 0; }
   .status-text { display: none; }
-  .vehicle-select { max-width: 90px; font-size: 0.68rem; }
+  .vehicle-select { max-width: 110px; font-size: 0.68rem; }
   .card { padding: 12px 14px; border-left-width: 3px; }
   .data-grid { gap: 6px; }
   .data-item__label { font-size: 0.68rem; }
