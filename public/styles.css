@@ -256,7 +256,11 @@ html, body {
 @media (max-width: 768px) {
   /* Fullscreen layout */
   html, body { overflow: hidden; height: 100%; }
-  .app { height: 100vh; }
+  .app {
+    height: 100vh;   /* fallback: navegadores sin soporte svh */
+    height: 100svh;  /* svh = small viewport height: siempre incluye la barra del navegador,
+                        evita el bug de 100vh en iOS donde el panel queda más alto que el viewport visible */
+  }
   .header { height: 50px; padding: 0 12px; gap: 8px; }
   .header__icon { font-size: 1.2rem; }
   .header__title { font-size: 1rem; }
@@ -359,7 +363,10 @@ html, body {
     border: none !important;
     overflow-y: auto !important;   /* base tiene overflow:hidden → sin !important no scrollea */
     overflow-x: hidden !important;
-    padding-bottom: 110px !important; /* espacio para el slider fijo (~103px de alto) */
+    /* Espacio para que la última gráfica quede completamente visible encima del slider fijo.
+       Desglose: slider ~112px + box-shadow 20px + buffer 8px = 140px base.
+       env(safe-area-inset-bottom): 0px Android, ~34px iPhone con home indicator. */
+    padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
   }
   /* Header sticky: "Volver al mapa" siempre accesible mientras se hace scroll */
   .charts-panel__header {
