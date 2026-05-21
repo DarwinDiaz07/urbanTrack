@@ -350,10 +350,36 @@ html, body {
   /* Footer: oculto en mobile (mapa fullscreen) */
   .footer { display: none; }
 
-  /* Charts panel ocupa todo */
-  .charts-panel { border-radius: 0; border: none; }
-  .charts-grid { grid-template-columns: 1fr; grid-template-rows: none; flex: none; }
-  .chart-box { height: 220px; }
+  /* Charts panel: scroll vertical, no overflow horizontal */
+  .charts-panel {
+    border-radius: 0;
+    border: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 90px; /* espacio para el slider fijo en la parte inferior */
+  }
+  /* Header sticky para que "Volver al mapa" siempre sea accesible */
+  .charts-panel__header {
+    position: sticky;
+    top: 0;
+    background: var(--black-secondary);
+    z-index: 10;
+    padding-bottom: 12px;
+    margin-bottom: 0;
+  }
+  /* Gráficas apiladas verticalmente, ancho completo */
+  .charts-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    flex: none;
+    gap: 12px;
+  }
+  .chart-box {
+    height: 240px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
 }
 
 @media (max-width: 420px) {
