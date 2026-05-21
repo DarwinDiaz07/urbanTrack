@@ -350,35 +350,39 @@ html, body {
   /* Footer: oculto en mobile (mapa fullscreen) */
   .footer { display: none; }
 
-  /* Charts panel: scroll vertical, no overflow horizontal */
+  /* Charts panel: columna única, scroll vertical hasta justo encima del slider */
   .charts-panel {
     border-radius: 0;
     border: none;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-bottom: 90px; /* espacio para el slider fijo en la parte inferior */
+    /* padding-bottom = altura real del slider fijo:
+       border-top 3px + padding-top 12px + título 17px + gap 6px
+       + info 17px + gap 12px + thumb range 20px + padding-bottom 16px ≈ 103px */
+    padding-bottom: 105px;
   }
-  /* Header sticky para que "Volver al mapa" siempre sea accesible */
+  /* Header sticky: "Volver al mapa" siempre visible al hacer scroll */
   .charts-panel__header {
     position: sticky;
     top: 0;
-    background: var(--black-secondary);
     z-index: 10;
+    background: var(--black-secondary);
     padding-bottom: 12px;
     margin-bottom: 0;
   }
-  /* Gráficas apiladas verticalmente, ancho completo */
+  /* Gráficas una debajo de la otra, ancho completo disponible */
   .charts-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    flex: none;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
   }
   .chart-box {
+    flex: none;
     height: 240px;
     width: 100%;
     max-width: 100%;
     overflow: hidden;
+    box-sizing: border-box;
   }
 }
 
