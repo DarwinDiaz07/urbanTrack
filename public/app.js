@@ -540,17 +540,22 @@ function verEnVivo() {
   elHora.textContent = "—";
 }
 
-// ─── Plugin: línea vertical sincronizada con el slider ────────────────────────
+// ─── Plugin: línea vertical + label sincronizados con el slider ───────────────
 const verticalLinePlugin = {
   id: "verticalLine",
   afterDraw(chart) {
-    const idx = chart.options.plugins.verticalLine?.index;
+    const opts = chart.options.plugins.verticalLine ?? {};
+    const idx = opts.index;
     if (idx == null) return;
     const meta = chart.getDatasetMeta(0);
     if (!meta.data[idx]) return;
-    const x = meta.data[idx].x;
-    const { top, bottom } = chart.chartArea;
+
+    const point = meta.data[idx];
+    const x = point.x;
+    const { top, bottom, left, right } = chart.chartArea;
     const ctx = chart.ctx;
+
+    // ── Línea vertical ────────────────────────────────────────────────────────
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(x, top);
@@ -559,6 +564,76 @@ const verticalLinePlugin = {
     ctx.strokeStyle = "#FFD700";
     ctx.setLineDash([5, 4]);
     ctx.stroke();
+    ctx.restore();
+
+    // ── Label flotante sobre el punto activo ──────────────────────────────────
+    const dataPoint = chart.data.datasets[0].data[idx];
+    // Salir si es un punto de gap (y nulo) o si la posición canvas no es válida
+    if (!dataPoint || dataPoint.y == null || isNaN(point.y)) return;
+
+    const value = dataPoint.y;
+    const ts    = dataPoint.x;
+    const line1 = `${opts.label ?? ""}: ${value}`;
+    const line2 = tsAFecha(ts);
+    const line3 = tsAHora(ts);
+
+    const pad = 6;
+    const lh  = 14; // line height en px
+
+    ctx.save();
+
+    // Medir anchos con la fuente correcta por línea
+    ctx.font = "bold 10px monospace";
+    const w1 = ctx.measureText(line1).width;
+    ctx.font = "10px monospace";
+    const w2 = ctx.measureText(line2).width;
+    const w3 = ctx.measureText(line3).width;
+
+    const boxW = Math.max(w1, w2, w3) + pad * 2;
+    const boxH = 3 * lh + pad * 2;
+
+    // Centrar en x; clamping para no salir del área del chart
+    let bx = x - boxW / 2;
+    bx = Math.max(left, Math.min(bx, right - boxW));
+
+    // Preferir mostrar encima del punto; si no cabe, mostrarlo debajo
+    const py = point.y;
+    let by = py - boxH - 10;
+    if (by < top) by = py + 12;
+
+    // Fondo semitransparente con borde amarillo y esquinas redondeadas
+    const r = 4;
+    ctx.setLineDash([]);
+    ctx.fillStyle   = "rgba(26, 26, 26, 0.92)";
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + boxW - r, by);
+    ctx.arcTo(bx + boxW, by,        bx + boxW, by + r,        r);
+    ctx.lineTo(bx + boxW, by + boxH - r);
+    ctx.arcTo(bx + boxW, by + boxH, bx + boxW - r, by + boxH, r);
+    ctx.lineTo(bx + r,   by + boxH);
+    ctx.arcTo(bx,        by + boxH, bx,        by + boxH - r, r);
+    ctx.lineTo(bx,       by + r);
+    ctx.arcTo(bx,        by,        bx + r,    by,            r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Texto: valor en amarillo (negrita), fecha y hora en gris
+    ctx.textBaseline = "top";
+    ctx.textAlign    = "left";
+
+    ctx.font      = "bold 10px monospace";
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(line1, bx + pad, by + pad);
+
+    ctx.font      = "10px monospace";
+    ctx.fillStyle = "#9E9E9E";
+    ctx.fillText(line2, bx + pad, by + pad + lh);
+    ctx.fillText(line3, bx + pad, by + pad + lh * 2);
+
     ctx.restore();
   },
 };
@@ -658,7 +733,7 @@ function crearGrafica(canvasId, label, datos, color, unit) {
             title: (items) => fmtTooltipTitle(items[0].raw.x),
           },
         },
-        verticalLine: { index: null },
+        verticalLine: { index: null, label, unit },
       },
       scales: {
         x: {
