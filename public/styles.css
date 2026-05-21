@@ -256,7 +256,11 @@ html, body {
 @media (max-width: 768px) {
   /* Fullscreen layout */
   html, body { overflow: hidden; height: 100%; }
-  .app { height: 100vh; }
+  .app {
+    height: 100vh;   /* fallback: navegadores sin soporte svh */
+    height: 100svh;  /* svh = small viewport height: siempre incluye la barra del navegador,
+                        evita el bug de 100vh en iOS donde el panel queda más alto que el viewport visible */
+  }
   .header { height: 50px; padding: 0 12px; gap: 8px; }
   .header__icon { font-size: 1.2rem; }
   .header__title { font-size: 1rem; }
@@ -350,10 +354,45 @@ html, body {
   /* Footer: oculto en mobile (mapa fullscreen) */
   .footer { display: none; }
 
-  /* Charts panel ocupa todo */
-  .charts-panel { border-radius: 0; border: none; }
-  .charts-grid { grid-template-columns: 1fr; grid-template-rows: none; flex: none; }
-  .chart-box { height: 220px; }
+  /* Charts panel: columna única, scroll vertical hasta justo encima del slider.
+     !important necesario porque las reglas base de .charts-panel y .charts-grid
+     están declaradas DESPUÉS de este bloque @media en el archivo, por lo que
+     sin !important el cascade las hace ganar sobre estas sobreescrituras. */
+  .charts-panel {
+    border-radius: 0 !important;
+    border: none !important;
+    overflow-y: auto !important;   /* base tiene overflow:hidden → sin !important no scrollea */
+    overflow-x: hidden !important;
+    /* Espacio para que la última gráfica quede completamente visible encima del slider fijo.
+       Desglose: slider ~112px + box-shadow 20px + buffer 8px = 140px base.
+       env(safe-area-inset-bottom): 0px Android, ~34px iPhone con home indicator. */
+    padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important;
+  }
+  /* Header sticky: "Volver al mapa" siempre accesible mientras se hace scroll */
+  .charts-panel__header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--black-secondary);
+    padding-bottom: 12px;
+    margin-bottom: 0 !important; /* base tiene margin-bottom:16px → pisaría el sticky */
+  }
+  /* Gráficas apiladas verticalmente, ancho completo */
+  .charts-grid {
+    display: flex !important;        /* base tiene display:grid → sin !important vuelve a 2 columnas */
+    flex-direction: column !important;
+    flex: none !important;           /* base tiene flex:1 → sin !important ignora el height de chart-box */
+    min-height: 0 !important;
+    gap: 12px !important;
+  }
+  .chart-box {
+    flex: none;
+    height: 240px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
 }
 
 @media (max-width: 420px) {
